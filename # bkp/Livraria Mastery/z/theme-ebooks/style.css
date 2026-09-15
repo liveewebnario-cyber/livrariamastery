@@ -1,0 +1,25 @@
+/*
+Theme Name: Ebooks Store
+Theme URI: https://github.com/ebooks-store
+Author: Ebooks Store
+Description: Tema profissional para venda de ebooks com integração ao Supabase. Menu dinâmico, banner rotativo, grade de produtos com hover dropdown e checkout integrado.
+Version: 1.0.0
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: ebooks-store
+Tags: e-commerce, ebooks, supabase, responsive
+*/
+
+/* Reset e variáveis - serão sobrescritas pelo JS com dados do Supabase */
+:root {
+  --primary: #6C3483;
+  --secondary: #F1C40F;
+  --accent: #E74C3C;
+  --bg: #FAFAFA;
+  --text: #2C2C2C;
+  --text-light: #666;
+  --white: #fff;
+  --shadow: 0 4px 20px rgba(0,0,0,0.1);
+  --radius: 12px;
+  --transition: 0.3s ease;
+}

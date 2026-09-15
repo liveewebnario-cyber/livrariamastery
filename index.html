@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Loja de ebooks de saúde, bem-estar e qualidade de vida" />
+  <title>Mastery Ebooks</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<style>
+:root {
+  --primary: #6C3483;
+  --secondary: #F1C40F;
+  --accent: #E74C3C;
+  --bg: #FAFAFA;
+  --text: #2C2C2C;
+  --text-light: #666;
+  --white: #fff;
+  --shadow: 0 4px 20px rgba(0,0,0,0.1);
+  --radius: 12px;
+  --tr: 0.3s ease;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+a { text-decoration: none; color: inherit; }
+img { max-width: 100%; display: block; }
+
+/* LOADER */
+#page-loader {
+  position: fixed; inset: 0;
+  background: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  transition: opacity .5s, visibility .5s;
+}
+#page-loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.loader-spinner {
+  width: 50px; height: 50px;
+  border: 4px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* HEADER */
+#site-header {
+  position: sticky; top: 0; z-index: 100;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,.08);
+}
+.header-inner {
+  max-width: 1300px; margin: 0 auto; padding: 0 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 70px; position: relative;
+}
+.site-logo img { height: 50px; width: auto; object-fit: contain; }
+.site-logo-text { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+
+.nav-menu { display: flex; align-items: center; gap: 4px; list-style: none; }
+.nav-menu li a {
+  padding: 8px 16px; border-radius: 8px;
+  font-weight: 500; font-size: .9rem; color: var(--text);
+  transition: var(--tr); white-space: nowrap;
+}
+.nav-menu li a:hover, .nav-menu li a.active { background: var(--primary); color: #fff; }
+
+.nav-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; background: none; border: none; }
+.nav-toggle span { display: block; width: 25px; height: 2px; background: var(--text); border-radius: 2px; transition: var(--tr); }
+
+/* BANNER */
+#banner-section { position: relative; width: 100%; overflow: hidden; background: #111; }
+.banner-track { display: flex; transition: transform .6s cubic-bezier(.25,.46,.45,.94); }
+.banner-slide { min-width: 100%; position: relative; }
+.banner-slide img { width: 100%; height: 380px; object-fit: cover; display: block; }
+.banner-content {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 20px;
+  background: linear-gradient(to bottom, rgba(0,0,0,.2), rgba(0,0,0,.6));
+}
+.banner-content h2 { color: #fff; font-size: clamp(1.5rem,4vw,2.8rem); font-weight: 800; text-shadow: 0 2px 10px rgba(0,0,0,.5); margin-bottom: 10px; }
+.banner-content p { color: rgba(255,255,255,.9); font-size: clamp(.9rem,2vw,1.15rem); margin-bottom: 20px; max-width: 600px; }
+.banner-btn {
+  display: inline-block; padding: 12px 32px;
+  background: var(--secondary); color: #222;
+  font-weight: 700; border-radius: 50px; font-size: 1rem;
+  transition: var(--tr); box-shadow: 0 4px 15px rgba(0,0,0,.2);
+}
+.banner-btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+.banner-dots { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; }
+.banner-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,.5); cursor: pointer; transition: var(--tr); border: none; }
+.banner-dot.active { background: #fff; transform: scale(1.3); }
+.banner-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,.2); border: none; color: #fff;
+  width: 44px; height: 44px; border-radius: 50%; font-size: 1.2rem;
+  cursor: pointer; transition: var(--tr); backdrop-filter: blur(4px);
+}
+.banner-arrow:hover { background: rgba(255,255,255,.4); }
+.banner-arrow.prev { left: 16px; }
+.banner-arrow.next { right: 16px; }
+
+/* CONTEÚDO */
+.container { max-width: 1300px; margin: 0 auto; padding: 40px 20px; }
+.section-title { font-size: 1.8rem; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+.section-title span { color: var(--primary); }
+.section-subtitle { color: var(--text-light); margin-bottom: 32px; font-size: 1rem; }
+.section-divider { width: 60px; height: 4px; background: var(--primary); border-radius: 4px; margin: 12px 0 28px; }
+
+/* GRID */
+.ebooks-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 24px; }
+
+/* CARD */
+.ebook-card {
+  background: #fff; border-radius: var(--radius);
+  box-shadow: var(--shadow); transition: transform var(--tr), box-shadow var(--tr);
+  position: relative; display: flex; flex-direction: column; overflow: visible;
+}
+.ebook-card:hover { transform: translateY(-6px); box-shadow: 0 12px 40px rgba(0,0,0,.15); }
+.ebook-cover { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: var(--radius) var(--radius) 0 0; }
+.ebook-info { padding: 14px 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.ebook-title { font-size: .88rem; font-weight: 700; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ebook-prices { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ebook-old-price { font-size: .78rem; color: var(--text-light); text-decoration: line-through; }
+.ebook-new-price { font-size: 1.15rem; font-weight: 800; color: var(--accent); }
+.ebook-discount { font-size: .7rem; background: #E8F8F5; color: #1E8449; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+
+/* Dropdown descrição */
+.ebook-desc-wrapper { position: relative; }
+.ebook-desc-toggle {
+  display: flex; align-items: center; gap: 6px;
+  font-size: .78rem; color: var(--primary); cursor: pointer;
+  font-weight: 600; padding: 4px 0; background: none; border: none; width: 100%; text-align: left;
+}
+.ebook-desc-toggle svg { transition: transform var(--tr); flex-shrink: 0; }
+.ebook-desc-toggle.open svg:last-child { transform: rotate(180deg); }
+.ebook-desc-dropdown {
+  position: absolute; bottom: calc(100% + 8px); left: 0; right: 0;
+  background: #fff; border: 1px solid #eee; border-radius: 8px;
+  padding: 12px; font-size: .78rem; color: var(--text-light); line-height: 1.5;
+  box-shadow: 0 8px 30px rgba(0,0,0,.12); z-index: 50;
+  opacity: 0; visibility: hidden; transform: translateY(6px);
+  transition: opacity .2s, visibility .2s, transform .2s;
+}
+.ebook-desc-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0); }
+.ebook-buy-btn {
+  display: block; width: 100%; padding: 10px;
+  background: var(--primary); color: #fff; text-align: center;
+  font-weight: 700; font-size: .85rem; border-radius: 8px;
+  border: none; cursor: pointer; transition: var(--tr); margin-top: auto;
+}
+.ebook-buy-btn:hover { background: var(--accent); transform: scale(1.02); }
+
+/* HOME HERO */
+.home-hero { text-align: center; padding: 50px 20px 20px; max-width: 700px; margin: 0 auto; }
+.home-hero h1 { font-size: clamp(1.8rem,4vw,2.8rem); font-weight: 800; color: var(--text); margin-bottom: 12px; line-height: 1.2; }
+.home-hero h1 span { color: var(--primary); }
+.home-hero p { color: var(--text-light); font-size: 1.05rem; }
+
+/* CATEGORIA SECTION */
+.category-section { margin-bottom: 60px; }
+.category-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
+.category-header .section-title { margin: 0; }
+.view-all-link { color: var(--primary); font-weight: 600; font-size: .88rem; display: flex; align-items: center; gap: 4px; transition: gap var(--tr); }
+.view-all-link:hover { gap: 8px; }
+
+/* SKELETON */
+.skeleton { background: #fff; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.skeleton-img { width: 100%; aspect-ratio: 3/4; background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+.skeleton-text { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.skeleton-line { height: 12px; border-radius: 6px; background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+.skeleton-line.short { width: 60%; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* FOOTER */
+#site-footer { background: #1a1a2e; color: rgba(255,255,255,.8); padding: 50px 20px 24px; margin-top: 60px; }
+.footer-inner { max-width: 1300px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+.footer-brand .footer-logo { color: #fff; font-size: 1.4rem; font-weight: 800; margin-bottom: 12px; }
+.footer-brand p { font-size: .88rem; line-height: 1.7; }
+.footer-col h4 { color: #fff; font-size: 1rem; margin-bottom: 16px; }
+.footer-col ul { list-style: none; }
+.footer-col ul li { margin-bottom: 8px; }
+.footer-col ul li a { font-size: .88rem; color: rgba(255,255,255,.7); transition: color var(--tr); }
+.footer-col ul li a:hover { color: var(--secondary); }
+.footer-bottom { max-width: 1300px; margin: 0 auto; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.1); text-align: center; font-size: .82rem; color: rgba(255,255,255,.5); }
+
+/* RESPONSIVO */
+@media (max-width: 1100px) { .ebooks-grid { grid-template-columns: repeat(3,1fr); } }
+@media (max-width: 900px) {
+  .footer-inner { grid-template-columns: 1fr 1fr; }
+  .nav-menu { display: none; flex-direction: column; position: absolute; top: 70px; left: 0; right: 0; background: #fff; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.1); gap: 4px; }
+  .nav-menu.open { display: flex; }
+  .nav-toggle { display: flex; }
+}
+@media (max-width: 700px) {
+  .ebooks-grid { grid-template-columns: repeat(2,1fr); }
+  .banner-slide img { height: 220px; }
+  .footer-inner { grid-template-columns: 1fr; }
+  .banner-arrow { display: none; }
+}
+@media (max-width: 420px) { .ebooks-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="page-loader"><div class="loader-spinner"></div></div>
+
+<!-- HEADER -->
+<header id="site-header">
+  <div class="header-inner">
+    <a href="index.html" class="site-logo" id="site-logo">
+      <span class="site-logo-text">Mastery Ebooks</span>
+    </a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <nav>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="index.html">Início</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<!-- BANNER -->
+<section id="banner-section">
+  <div class="banner-track" id="banner-track"></div>
+  <button class="banner-arrow prev" id="banner-prev">&#8249;</button>
+  <button class="banner-arrow next" id="banner-next">&#8250;</button>
+  <div class="banner-dots" id="banner-dots"></div>
+</section>
+
+<!-- CONTEÚDO -->
+<main id="main-content"></main>
+
+<!-- FOOTER -->
+<footer id="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo" id="footer-logo">Mastery Ebooks</div>
+      <p id="footer-tagline">Os melhores ebooks para sua saúde e bem-estar</p>
+      <br/>
+      <p id="footer-address"></p>
+      <p id="footer-phone"></p>
+      <p><a id="footer-email" href="#">‍</a></p>
+    </div>
+    <div class="footer-col">
+      <h4>Categorias</h4>
+      <ul id="footer-cats"></ul>
+    </div>
+    <div class="footer-col">
+      <h4>Informações</h4>
+      <ul>
+        <li><a href="#">Sobre Nós</a></li>
+        <li><a href="#">Política de Privacidade</a></li>
+        <li><a href="#">Termos de Uso</a></li>
+        <li><a href="#">Contato</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p id="footer-text">© 2026 Mastery Ebooks. Todos os direitos reservados.</p>
+  </div>
+</footer>
+
+<script>
+// ============================================================
+// CONFIGURAÇÕES SUPABASE
+// ============================================================
+const SUPABASE_URL  = 'https://cghrmeckjzjzgpgcgiot.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNnaHJtZWNranpqemdwZ2NnaW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0OTc3MDUsImV4cCI6MjEwNTA3MzcwNX0.sIM_w8C31JwXJq2bm2h-69hhAOehBYuWtTUEUqKItyM';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ============================================================
+// HELPERS
+// ============================================================
+const $  = (s, ctx=document) => ctx.querySelector(s);
+const $$ = (s, ctx=document) => [...ctx.querySelectorAll(s)];
+const fmt = v => Number(v).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+const disc = (o, n) => o ? Math.round((1 - n/o)*100) : 0;
+const slug2url = s => `${window.location.pathname}?cat=${s}`;
+
+let _cats = null;
+async function getCats() {
+  if (_cats) return _cats;
+  const { data, error } = await sb.from('categories').select('*').eq('active', true).order('sort_order');
+  if (error) throw new Error(error.message);
+  _cats = (data || []).map(c => ({...c})); // cópia plana sem referências circulares
+  return _cats;
+}
+
+// ============================================================
+// SITE CONFIG — logo, cores, footer
+// ============================================================
+async function loadSiteConfig() {
+  try {
+    const { data: cfg } = await sb.from('site_config').select('*').eq('id', 1).single();
+    if (!cfg) return;
+
+    // Cores dinâmicas
+    const root = document.documentElement;
+    if (cfg.primary_color)   root.style.setProperty('--primary',   cfg.primary_color);
+    if (cfg.secondary_color) root.style.setProperty('--secondary',  cfg.secondary_color);
+
+    // Logo
+    const logoEl = $('#site-logo');
+    if (logoEl) {
+      logoEl.innerHTML = cfg.logo_url
+        ? `<img src="${cfg.logo_url}" alt="${cfg.site_name || 'Logo'}" />`
+        : `<span class="site-logo-text">${cfg.site_name || 'Mastery Ebooks'}</span>`;
+    }
+
+    // Título
+    if (cfg.site_name) document.title = cfg.site_name;
+
+    // Footer
+    if (cfg.site_name)    $('#footer-logo').textContent  = cfg.site_name;
+    if (cfg.address)      $('#footer-address').textContent = '📍 ' + cfg.address;
+    if (cfg.phone)        $('#footer-phone').textContent   = '📞 ' + cfg.phone;
+    if (cfg.email) {
+      const el = $('#footer-email');
+      el.textContent = '✉️ ' + cfg.email;
+      el.href = 'mailto:' + cfg.email;
+    }
+    if (cfg.footer_text)  $('#footer-text').textContent   = cfg.footer_text;
+
+  } catch(e) { console.warn('site_config error:', String(e)); }
+}
+
+// ============================================================
+// MENU
+// ============================================================
+async function loadMenu() {
+  try {
+    const cats = await getCats();
+    const currentSlug = new URLSearchParams(location.search).get('cat');
+
+    // Menu principal
+    $('#nav-menu').innerHTML =
+      `<li><a href="${location.pathname}" class="${!currentSlug ? 'active' : ''}">Início</a></li>` +
+      cats.map(c =>
+        `<li><a href="${slug2url(c.slug)}" class="${currentSlug===c.slug ? 'active' : ''}">${c.name}</a></li>`
+      ).join('');
+
+    // Footer categorias
+    $('#footer-cats').innerHTML = cats.map(c =>
+      `<li><a href="${slug2url(c.slug)}">${c.name}</a></li>`
+    ).join('');
+
+  } catch(e) { console.warn('menu error:', String(e)); }
+}
+
+// ============================================================
+// BANNER — sem button_text (não existe no schema)
+// ============================================================
+async function loadBanner() {
+  try {
+    const { data: banners } = await sb.from('banners').select('*').eq('active', true).order('sort_order');
+    if (!banners?.length) { $('#banner-section')?.remove(); return; }
+
+    const track = $('#banner-track');
+    const dots  = $('#banner-dots');
+
+    track.innerHTML = banners.map(b => `
+      <div class="banner-slide">
+        <img src="${b.image_url}" alt="${b.title || ''}" loading="eager" />
+        <div class="banner-content">
+          ${b.title    ? `<h2>${b.title}</h2>`       : ''}
+          ${b.subtitle ? `<p>${b.subtitle}</p>`      : ''}
+          ${b.link_url ? `<a href="${b.link_url}" class="banner-btn">Ver mais</a>` : ''}
+        </div>
+      </div>
+    `).join('');
+
+    let cur = 0;
+    const total = banners.length;
+    let timer;
+
+    dots.innerHTML = banners.map((_,i) =>
+      `<button class="banner-dot ${i===0?'active':''}" data-i="${i}"></button>`
+    ).join('');
+
+    function goTo(n) {
+      cur = (n + total) % total;
+      track.style.transform = `translateX(-${cur*100}%)`;
+      $$('.banner-dot').forEach((d,i) => d.classList.toggle('active', i===cur));
+      clearInterval(timer);
+      timer = setInterval(() => goTo(cur+1), 5000);
+    }
+
+    dots.addEventListener('click', e => { if (e.target.dataset.i !== undefined) goTo(+e.target.dataset.i); });
+    $('#banner-prev')?.addEventListener('click', () => goTo(cur-1));
+    $('#banner-next')?.addEventListener('click', () => goTo(cur+1));
+    goTo(0);
+
+  } catch(e) { console.warn('banner error:', String(e)); }
+}
+
+// ============================================================
+// CARD DE EBOOK
+// ============================================================
+function createCard(ebook) {
+  const d = disc(ebook.old_price, ebook.new_price);
+  const card = document.createElement('div');
+  card.className = 'ebook-card';
+  card.innerHTML = `
+    <img class="ebook-cover"
+         src="${ebook.cover_url || 'https://placehold.co/300x400/eee/999?text=Capa'}"
+         alt="${ebook.title}"
+         loading="lazy"
+         onerror="this.src='https://placehold.co/300x400/eee/999?text=Capa'" />
+    <div class="ebook-info">
+      <h3 class="ebook-title">${ebook.title}</h3>
+      <div class="ebook-prices">
+        ${ebook.old_price ? `<span class="ebook-old-price">${fmt(ebook.old_price)}</span>` : ''}
+        <span class="ebook-new-price">${fmt(ebook.new_price)}</span>
+        ${d > 0 ? `<span class="ebook-discount">-${d}%</span>` : ''}
+      </div>
+      ${ebook.short_description ? `
+        <div class="ebook-desc-wrapper">
+          <button class="ebook-desc-toggle" aria-expanded="false">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Saiba mais
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:auto"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="ebook-desc-dropdown">${ebook.short_description}</div>
+        </div>
+      ` : ''}
+      <a href="${ebook.checkout_url || '#'}" target="_blank" rel="noopener" class="ebook-buy-btn">🛒 Comprar Agora</a>
+    </div>
+  `;
+
+  // Dropdown hover + click
+  const wrap     = card.querySelector('.ebook-desc-wrapper');
+  const toggle   = card.querySelector('.ebook-desc-toggle');
+  const dropdown = card.querySelector('.ebook-desc-dropdown');
+  if (wrap && toggle && dropdown) {
+    const open  = () => { toggle.classList.add('open');    dropdown.classList.add('open');    toggle.setAttribute('aria-expanded','true');  };
+    const close = () => { toggle.classList.remove('open'); dropdown.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); };
+    wrap.addEventListener('mouseenter', open);
+    wrap.addEventListener('mouseleave', close);
+    toggle.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.contains('open') ? close() : open(); });
+  }
+  return card;
+}
+
+// ============================================================
+// SKELETON
+// ============================================================
+function skelHTML(n) {
+  return Array(n).fill(`
+    <div class="skeleton">
+      <div class="skeleton-img"></div>
+      <div class="skeleton-text">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// CARREGAR EBOOKS POR CATEGORIA
+// ============================================================
+async function loadEbooks(catId, container, limit=null) {
+  try {
+    let q = sb.from('ebooks').select('*')
+      .eq('category_id', catId)
+      .eq('active', true)
+      .order('sort_order');
+    if (limit) q = q.limit(limit);
+
+    const { data, error } = await q;
+    if (error) throw new Error(error.message);
+
+    if (!data?.length) {
+      container.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;padding:40px 0">Nenhum ebook encontrado nesta categoria.</p>';
+      return;
+    }
+    container.innerHTML = '';
+    data.forEach(e => container.appendChild(createCard(e)));
+  } catch(err) {
+    console.error('ebooks:', err);
+    container.innerHTML = '<p style="color:#c00;text-align:center;grid-column:1/-1;padding:40px 0">Erro ao carregar ebooks.</p>';
+  }
+}
+
+// ============================================================
+// PÁGINA HOME
+// ============================================================
+async function loadHome() {
+  const main = $('#main-content');
+  const cats = await getCats();
+
+  main.innerHTML = `
+    <div class="home-hero">
+      <h1>Os melhores ebooks para sua <span>saúde e bem-estar</span></h1>
+      <p>Conteúdo especializado para cuidar de você em todas as fases da vida</p>
+    </div>`;
+
+  for (const cat of cats) {
+    const sec = document.createElement('section');
+    sec.className = 'category-section container';
+    sec.innerHTML = `
+      <div class="category-header">
+        <div>
+          <h2 class="section-title">${cat.name}</h2>
+          <div class="section-divider"></div>
+        </div>
+        <a href="${slug2url(cat.slug)}" class="view-all-link">Ver todos →</a>
+      </div>
+      <div class="ebooks-grid" id="grid-${cat.id}">${skelHTML(4)}</div>`;
+    main.appendChild(sec);
+    loadEbooks(cat.id, sec.querySelector(`#grid-${cat.id}`), 4);
+  }
+}
+
+// ============================================================
+// PÁGINA DE CATEGORIA
+// ============================================================
+async function loadCategoryPage(slug) {
+  const main = $('#main-content');
+  const cats = await getCats();
+  const cat  = cats.find(c => c.slug === slug);
+
+  if (!cat) {
+    main.innerHTML = '<p style="text-align:center;padding:80px 20px;color:#999">Categoria não encontrada.</p>';
+    return;
+  }
+
+  document.title = `${cat.name} — Mastery Ebooks`;
+
+  main.innerHTML = `
+    <div class="container">
+      <h1 class="section-title"><span>${cat.name}</span></h1>
+      <div class="section-divider"></div>
+      <p class="section-subtitle">${cat.description || 'Explore nossa seleção de ebooks nesta categoria.'}</p>
+      <div class="ebooks-grid" id="cat-grid">${skelHTML(8)}</div>
+    </div>`;
+
+  loadEbooks(cat.id, $('#cat-grid'));
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  try {
+    await Promise.all([loadSiteConfig(), loadMenu(), loadBanner()]);
+
+    const slug = new URLSearchParams(location.search).get('cat');
+    if (slug) await loadCategoryPage(slug);
+    else      await loadHome();
+
+  } catch(e) {
+    console.error('Init error:', String(e));
+  } finally {
+    $('#page-loader').classList.add('hidden');
+  }
+}
+
+// Mobile nav toggle
+document.addEventListener('click', e => {
+  if (e.target.closest('#nav-toggle')) {
+    $('#nav-menu').classList.toggle('open');
+  }
+});
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

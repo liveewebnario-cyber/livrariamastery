@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Loja de ebooks de saúde, bem-estar e qualidade de vida" />
+  <title>{{SITE_NAME}}</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="assets/css/main.css" />
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- Config (credenciais) -->
+  <script src="assets/js/config.js"></script>
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div id="page-loader">
+    <div class="loader-spinner"></div>
+  </div>
+
+  <!-- HEADER -->
+  <header id="site-header">
+    <div class="header-inner">
+
+      <!-- LOGO -->
+      <a href="index.html" class="site-logo" id="site-logo">
+        <span class="site-logo-text">Carregando...</span>
+      </a>
+
+      <!-- HAMBURGUER (mobile) -->
+      <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+
+      <!-- MENU (dinâmico via Supabase) -->
+      <nav>
+        <ul class="nav-menu" id="nav-menu">
+          <li><a href="index.html">Início</a></li>
+        </ul>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- BANNER ROTATIVO (aparece em TODAS as páginas) -->
+  <section id="banner-section">
+    <div class="banner-track" id="banner-track">
+      <!-- Banners carregados via JS -->
+    </div>
+    <button class="banner-arrow prev" id="banner-prev" aria-label="Anterior">&#8249;</button>
+    <button class="banner-arrow next" id="banner-next" aria-label="Próximo">&#8250;</button>
+    <div class="banner-dots" id="banner-dots"></div>
+  </section>
+
+  <!-- CONTEÚDO PRINCIPAL (home ou categoria) -->
+  <main id="main-content">
+    <!-- Conteúdo carregado dinamicamente via JS -->
+  </main>
+
+  <!-- FOOTER -->
+  <footer id="site-footer">
+    <div class="footer-inner">
+
+      <div class="footer-brand">
+        <div class="footer-logo" id="footer-logo">Minha Loja</div>
+        <p id="footer-tagline">Os melhores ebooks para sua saúde e bem-estar</p>
+        <br />
+        <p class="footer-address">📍 </p>
+        <p><span class="footer-phone">📞 </span></p>
+        <p><a class="footer-email" href="#">✉️ </a></p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Categorias</h4>
+        <ul id="footer-cats">
+          <!-- Preenchido via JS -->
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Informações</h4>
+        <ul>
+          <li><a href="#">Sobre Nós</a></li>
+          <li><a href="#">Política de Privacidade</a></li>
+          <li><a href="#">Termos de Uso</a></li>
+          <li><a href="#">Contato</a></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p id="footer-text">© 2025 Minha Loja de Ebooks. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- APP JS -->
+  <script src="assets/js/app.js"></script>
+
+  <script>
+    // Preencher categorias no footer após carregar
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const menu = document.getElementById('nav-menu');
+        const footerCats = document.getElementById('footer-cats');
+        if (menu && footerCats) {
+          const links = menu.querySelectorAll('a');
+          footerCats.innerHTML = [...links].map(a =>
+            `<li><a href="${a.href}">${a.textContent}</a></li>`
+          ).join('');
+        }
+      }, 2000);
+    });
+  </script>
+
+</body>
+</html>

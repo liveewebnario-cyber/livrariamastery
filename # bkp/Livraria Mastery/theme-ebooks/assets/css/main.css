@@ -1,0 +1,68 @@
+/* Main CSS - PRD v1.0 */
+
+:root {
+    --primary-color: #6C3483;
+    --secondary-color: #F1C40F;
+}
+
+body {
+    background-color: #FAFAFA;
+    color: #2C2C2C;
+}
+
+.transition-smooth {
+    transition: all 0.3s ease-in-out;
+}
+
+/* 4-Column Grid */
+.ebook-grid {
+    display: grid;
+    gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .ebook-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .ebook-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 767px) {
+    .ebook-grid {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}
+
+/* Card Hover Dropdown */
+.ebook-dropdown {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.group:hover .ebook-dropdown {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.line-through-price {
+    text-decoration: line-through;
+    color: #888;
+}
+
+.active-cat {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* Banner Animations */
+#banner-container {
+    transition: opacity 1s ease-in-out;
+}

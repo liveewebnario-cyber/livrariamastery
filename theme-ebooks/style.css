@@ -1,0 +1,25 @@
+/*
+Theme Name: Theme Ebooks
+Theme URI: https://cghrmeckjzjzgpgcgiot.supabase.co
+Author: Antigravity
+Description: Premium Ebook Sales Theme - PRD v1.0. Integrated with Supabase.
+Version: 1.0.0
+Text Domain: theme-ebooks
+*/
+
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-space: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #FAFAFA;
+    color: #2C2C2C;
+}
+
+.hidden {
+    display: none;
+}
