@@ -127,9 +127,6 @@ document.addEventListener('DOMContentLoaded', function () {
                             <i data-lucide="shopping-cart"></i>
                         </button>
                     </div>
-                            ${ebook.video_url || ebook.audio_url ? `<button onclick="openEbookMedia(${JSON.stringify(ebook).replace(/"/g,'&quot;')})" class="w-full mt-3 py-2 bg-purple-600/90 hover:bg-purple-500 text-white rounded-lg text-sm font-semibold transition-colors">
-                                ${ebook.video_url ? '▶ Ver prévia' : '🎧 Ouvir prévia'}
-                            </button>` : ''}
                             <button onclick="openEbookPopup(${JSON.stringify(ebook).replace(/"/g,'&quot;')})" class="w-full mt-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-semibold transition-colors">
                                 Saiba mais
                             </button>
@@ -216,22 +213,31 @@ document.addEventListener('DOMContentLoaded', function () {
                     <span>✅ Produto original</span>
                 </div>
                 <a href="${e.checkout_url || '#'}" target="_blank" class="block w-full text-center py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/40 mb-4">COMPRAR AGORA</a>
-                <div class="pd-popup-content">${mdToP(e.full_description || e.short_description || '')}</div>
+                ${(e.video_url || e.audio_url) ? `<button id="pm-preview" onclick="showPopupMedia()" class="block w-full text-center py-3 mb-4 bg-purple-600/90 hover:bg-purple-500 text-white rounded-xl font-bold transition-colors text-sm">${e.video_url ? '▶ Ver prévia (vídeo)' : '🎧 Ouvir prévia (áudio)'}</button>` : ''}
+                <div id="pm-player" style="display:none">
+                    <button onclick="hidePopupMedia()" class="inline-flex items-center gap-1.5 bg-gray-800 hover:bg-gray-700 text-white text-sm font-bold px-4 py-2 rounded-lg mb-4">← Voltar</button>
+                    <div id="pm-player-body"></div>
+                </div>
+                <div class="pd-popup-content" id="pm-desc">${mdToP(e.full_description || e.short_description || '')}</div>
             </div>
         </div>`;
         ov.style.display = 'flex';
+        _pmCurrent = e;
+        hidePopupMedia();
         lucide.createIcons();
     }
 
     function closeEbookPopup() {
         const ov = document.getElementById('ebook-popup-overlay');
         if (ov) ov.style.display = 'none';
+        destroyHls();
     }
 
     // ================================================================
-    // POPUP MÍDIA (vídeo/áudio com botão voltar)
+    // PLAYER NO POPUP (vídeo/áudio com botão voltar)
     // ================================================================
     let _hlsInstance = null;
+    let _pmCurrent = null;
     function destroyHls() {
         if (_hlsInstance) { try { _hlsInstance.destroy(); } catch (err) {} _hlsInstance = null; }
     }
@@ -244,65 +250,52 @@ document.addEventListener('DOMContentLoaded', function () {
             document.head.appendChild(s);
         });
     }
-
-    function openEbookMedia(e) {
-        if (!e) return;
-        const isVideo = !!e.video_url;
-        let ov = document.getElementById('ebook-media-overlay');
-        if (!ov) {
-            ov = document.createElement('div');
-            ov.id = 'ebook-media-overlay';
-            ov.className = 'fixed inset-0 z-[110] bg-black/85 backdrop-blur-sm items-center justify-center p-4 overflow-y-auto';
-            ov.style.display = 'none';
-            ov.addEventListener('click', (ev) => { if (ev.target === ov) closeEbookMedia(); });
-            document.body.appendChild(ov);
-        }
-        destroyHls();
-        ov.innerHTML = `
-        <div class="relative bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden my-auto">
-            <div class="flex items-center gap-3 p-4 border-b border-gray-700">
-                <button onclick="closeEbookMedia()" class="flex items-center gap-1.5 bg-gray-800 hover:bg-gray-700 text-white text-sm font-bold px-4 py-2 rounded-lg">← Voltar</button>
-                <span class="truncate text-sm text-gray-300">${escP(e.title)}</span>
-            </div>
-            <div class="p-4">
-                ${isVideo
-                    ? '<video id="pm-video" controls controlsList="nodownload" class="w-full aspect-video bg-black rounded-xl"></video>'
-                    : '<div class="flex items-center justify-center py-10"><audio id="pm-audio" controls class="w-full"></audio></div>'}
-            </div>
-        </div>`;
-        ov.style.display = 'flex';
-
-        if (isVideo) {
-            (async () => {
-                const vid = document.getElementById('pm-video');
-                if (!vid) return;
-                if (e.video_url.includes('.m3u8')) {
-                    await loadHlsScript();
+    function addPopupMedia(bodyEl, e) {
+        bodyEl.innerHTML = '';
+        if (e.video_url) {
+            const v = document.createElement('video');
+            v.controls = true;
+            v.controlsList = 'nodownload';
+            bodyEl.appendChild(v);
+            if (e.video_url.includes('.m3u8')) {
+                loadHlsScript().then(() => {
                     if (window.Hls && Hls.isSupported()) {
                         const hls = new Hls();
                         hls.loadSource(e.video_url);
-                        hls.attachMedia(vid);
+                        hls.attachMedia(v);
                         _hlsInstance = hls;
-                    } else if (vid.canPlayType('application/vnd.apple.mpegurl')) {
-                        vid.src = e.video_url;
+                    } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
+                        v.src = e.video_url;
                     }
-                } else {
-                    vid.src = e.video_url;
-                }
-            })();
+                });
+            } else {
+                v.src = e.video_url;
+            }
         } else {
-            const aud = document.getElementById('pm-audio');
-            if (aud) aud.src = e.audio_url;
+            const a = document.createElement('audio');
+            a.controls = true;
+            a.src = e.audio_url;
+            bodyEl.appendChild(a);
         }
     }
-
-    function closeEbookMedia() {
+    function showPopupMedia() {
+        const e = _pmCurrent;
+        if (!e || (!e.video_url && !e.audio_url)) return;
+        document.getElementById('pm-desc').style.display = 'none';
+        document.getElementById('pm-player').style.display = 'block';
+        addPopupMedia(document.getElementById('pm-player-body'), e);
+    }
+    function hidePopupMedia() {
         destroyHls();
-        const ov = document.getElementById('ebook-media-overlay');
-        if (ov) { ov.innerHTML = ''; ov.style.display = 'none'; }
+        const bodyEl = document.getElementById('pm-player-body');
+        if (bodyEl) bodyEl.innerHTML = '';
+        const pl = document.getElementById('pm-player');
+        if (pl) pl.style.display = 'none';
+        const desc = document.getElementById('pm-desc');
+        if (desc) desc.style.display = '';
     }
 
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeEbookPopup(); closeEbookMedia(); } });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeEbookPopup(); } });
 
     // 5. Category Filtering Logic
     document.querySelectorAll('.cat-btn').forEach(btn => {

@@ -74,7 +74,7 @@ const renderMarkdown = (text = '') => {
 
 const EbookCard = ({ ebook }) => {
     const [open, setOpen] = useState(false);
-    const [media, setMedia] = useState(null);
+    const [playMedia, setPlayMedia] = useState(null);
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat('pt-BR', {
@@ -171,16 +171,6 @@ const EbookCard = ({ ebook }) => {
                             >
                                 <ShoppingCart size={20} />
                             </button>
-                            {(ebook.video_url || ebook.audio_url) && (
-                                <button
-                                    onClick={() => setMedia(ebook.video_url ? 'video' : 'audio')}
-                                    className="bg-purple-600/90 hover:bg-purple-500 text-white px-3 py-2 rounded-lg transition-colors text-xs font-semibold flex items-center justify-center gap-1.5"
-                                    title={ebook.video_url ? 'Assistir vídeo' : 'Ouvir áudio'}
-                                >
-                                    {ebook.video_url ? <Play size={14} /> : <Headphones size={14} />}
-                                    {ebook.video_url ? 'Vídeo' : 'Áudio'}
-                                </button>
-                            )}
                             <button
                                 onClick={() => setOpen(true)}
                                 className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg transition-colors text-sm font-semibold"
@@ -200,7 +190,7 @@ const EbookCard = ({ ebook }) => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={() => setOpen(false)}
+                        onClick={() => { setPlayMedia(null); setOpen(false); }}
                     >
                         <motion.div
                             className="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
@@ -224,7 +214,7 @@ const EbookCard = ({ ebook }) => {
                                     <div className="flex items-start justify-between gap-4 mb-2">
                                         <h2 className="text-xl font-bold text-white">{ebook.title}</h2>
                                         <button
-                                            onClick={() => setOpen(false)}
+                                            onClick={() => { setPlayMedia(null); setOpen(false); }}
                                             className="text-slate-400 hover:text-white"
                                             aria-label="Fechar"
                                         >
@@ -287,53 +277,45 @@ const EbookCard = ({ ebook }) => {
                                         Comprar agora
                                     </button>
 
-                                    {description && (
-                                        <div
-                                            className="md-content max-h-64 overflow-y-auto pr-2"
-                                            dangerouslySetInnerHTML={{ __html: renderMarkdown(description) }}
-                                        />
+                                    {playMedia ? (
+                                        <div className="border-t border-slate-800 pt-4">
+                                            <button
+                                                onClick={() => setPlayMedia(null)}
+                                                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors mb-4"
+                                            >
+                                                <ArrowLeft size={16} />
+                                                Voltar
+                                            </button>
+                                            {playMedia === 'video'
+                                                ? <HlsVideo src={ebook.video_url} />
+                                                : (
+                                                    <div className="flex items-center justify-center py-8">
+                                                        <audio controls src={ebook.audio_url} className="w-full" />
+                                                    </div>
+                                                )}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {(ebook.video_url || ebook.audio_url) && (
+                                                <div className="flex flex-col gap-2 mb-4">
+                                                    <button
+                                                        onClick={() => setPlayMedia(ebook.video_url ? 'video' : 'audio')}
+                                                        className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-4 rounded-xl transition-colors"
+                                                    >
+                                                        {ebook.video_url ? <Play size={18} /> : <Headphones size={18} />}
+                                                        {ebook.video_url ? '▶ Ver prévia (vídeo)' : '🎧 Ouvir prévia (áudio)'}
+                                                    </button>
+                                                </div>
+                                            )}
+                                            {description && (
+                                                <div
+                                                    className="md-content max-h-64 overflow-y-auto pr-2"
+                                                    dangerouslySetInnerHTML={{ __html: renderMarkdown(description) }}
+                                                />
+                                            )}
+                                        </>
                                     )}
                                 </div>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        {/* ── POPUP MÍDIA (vídeo/áudio) ── */}
-            <AnimatePresence>
-                {media && (
-                    <motion.div
-                        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={() => setMedia(null)}
-                    >
-                        <motion.div
-                            className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl shadow-2xl"
-                            initial={{ scale: 0.95, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.95, y: 20 }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="flex items-center gap-3 p-4 border-b border-slate-800">
-                                <button
-                                    onClick={() => setMedia(null)}
-                                    className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-                                >
-                                    <ArrowLeft size={16} />
-                                    Voltar
-                                </button>
-                                <span className="text-sm text-slate-300 truncate">{ebook.title}</span>
-                            </div>
-                            <div className="p-4">
-                                {media === 'video'
-                                    ? <HlsVideo src={ebook.video_url} />
-                                    : (
-                                        <div className="flex items-center justify-center py-8">
-                                            <audio controls src={ebook.audio_url} className="w-full" />
-                                        </div>
-                                    )}
                             </div>
                         </motion.div>
                     </motion.div>
