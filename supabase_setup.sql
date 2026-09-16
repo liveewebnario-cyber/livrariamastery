@@ -95,6 +95,8 @@ CREATE TABLE IF NOT EXISTS ebooks (
   author TEXT DEFAULT '',
   pages INTEGER DEFAULT NULL,
   checkout_url TEXT DEFAULT '#',
+  download_url TEXT DEFAULT '',
+  rating NUMERIC(2,1) DEFAULT NULL,
   badge TEXT DEFAULT '',
   active BOOLEAN DEFAULT TRUE,
   featured BOOLEAN DEFAULT FALSE,

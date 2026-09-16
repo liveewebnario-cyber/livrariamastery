@@ -129,6 +129,49 @@ img { max-width: 100%; display: block; }
 .ebook-old-price { font-size: .78rem; color: var(--text-light); text-decoration: line-through; }
 .ebook-new-price { font-size: 1.15rem; font-weight: 800; color: var(--accent); }
 .ebook-discount { font-size: .7rem; background: #E8F8F5; color: #1E8449; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+.ebook-stars { display: flex; gap: 2px; color: #f5b301; font-size: .85rem; line-height: 1; }
+.ebook-stars .star-off { color: #d8d8d8; }
+.ebook-savings { display: flex; align-items: center; gap: 4px; font-size: .74rem; color: #1E8449; font-weight: 700; margin-top: 4px; }
+
+/* Popup detalhes */
+.popup-overlay { position: fixed; inset: 0; background: rgba(10,14,22,.82); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 1000; backdrop-filter: blur(4px); }
+.popup-overlay.open { display: flex; }
+.popup { background: #fff; color: #222; border-radius: 14px; width: 100%; max-width: 760px; max-height: 90vh; overflow-y: auto; box-shadow: 0 30px 80px rgba(0,0,0,.5); position: relative; }
+.popup-grid { display: grid; grid-template-columns: 230px 1fr; }
+.popup-cover { display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; }
+.popup-body { padding: 22px 26px; }
+.popup-close { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; border: none; background: rgba(15,23,42,.08); color: #334155; font-size: 18px; line-height: 1; cursor: pointer; z-index: 2; }
+.popup-close:hover { background: rgba(15,23,42,.16); }
+.popup-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 6px; }
+.popup-stars { display: flex; gap: 2px; color: #f5b301; font-size: 1rem; margin-bottom: 10px; }
+.popup-stars .star-off { color: #dbdbdb; }
+.popup-prices { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.popup-old { color: #9aa0a8; text-decoration: line-through; font-size: .95rem; }
+.popup-new { font-size: 1.8rem; font-weight: 800; color: #1E8449; }
+.popup-discount { font-size: .75rem; background: #E8F8F5; color: #1E8449; padding: 3px 8px; border-radius: 5px; font-weight: 800; }
+.popup-savings { flex-basis: 100%; font-size: .8rem; color: #1E8449; font-weight: 700; }
+.popup-buy { display: block; width: 100%; text-align: center; background: #1976D2; color: #fff; font-weight: 700; font-size: 1rem; padding: 14px; border-radius: 10px; text-decoration: none; margin-bottom: 16px; transition: filter .2s; }
+.popup-buy:hover { filter: brightness(1.08); }
+
+/* Descrição markdown */
+.pd-content { font-size: .9rem; line-height: 1.7; color: #374151; }
+.pd-content h1, .pd-content h2, .pd-content h3, .pd-content h4 { color: #0f172a; font-weight: 800; margin: 1em 0 .35em; line-height: 1.3; }
+.pd-content h1 { font-size: 1.2rem; } .pd-content h2 { font-size: 1.05rem; }
+.pd-content h3 { font-size: .98rem; } .pd-content h4 { font-size: .93rem; }
+.pd-content h1:first-child, .pd-content h2:first-child, .pd-content h3:first-child { margin-top: 0; }
+.pd-content p { margin: .45em 0; }
+.pd-content ul { margin: .45em 0; padding-left: 1.3em; list-style: disc; }
+.pd-content li { margin: .18em 0; }
+.pd-content hr { border: none; border-top: 1px dashed #dfe1e4; margin: .9em 0; }
+.pd-content strong { color: #1976D2; font-weight: 700; }
+.pd-content code { background: #f1f5f9; padding: .1em .4em; border-radius: 4px; font-size: .85em; color: #0d47a1; }
+.pd-trust { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border-top: 1px solid #eef0f2; margin-top: 18px; padding-top: 14px; font-size: .72rem; color: #64748b; }
+.pd-trust span { display: flex; align-items: center; gap: 5px; }
+@media (max-width: 640px) {
+  .popup-grid { grid-template-columns: 1fr; }
+  .popup-cover { max-width: 200px; margin: 0 auto; border-radius: 10px; }
+  .pd-trust { grid-template-columns: 1fr; }
+}
 
 /* Dropdown descrição */
 .ebook-desc-wrapper { position: relative; }
@@ -155,6 +198,13 @@ img { max-width: 100%; display: block; }
   border: none; cursor: pointer; transition: var(--tr); margin-top: auto;
 }
 .ebook-buy-btn:hover { background: var(--accent); transform: scale(1.02); }
+.ebook-details-btn {
+  display: block; width: 100%; padding: 11px; margin-top: 8px;
+  background: rgba(25,118,210,.12); color: var(--primary); text-align: center;
+  font-weight: 700; font-size: .95rem; border-radius: 8px;
+  border: 1px solid rgba(25,118,210,.35); cursor: pointer; transition: var(--tr);
+}
+.ebook-details-btn:hover { background: var(--primary); color: #fff; }
 
 /* HOME HERO */
 .home-hero { text-align: center; padding: 50px 20px 20px; max-width: 700px; margin: 0 auto; }
@@ -284,6 +334,8 @@ const $  = (s, ctx=document) => ctx.querySelector(s);
 const $$ = (s, ctx=document) => [...ctx.querySelectorAll(s)];
 const fmt = v => Number(v).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
 const disc = (o, n) => o ? Math.round((1 - n/o)*100) : 0;
+const savings = (o, n) => (o && n && o > n) ? o - n : 0;
+const starsHtml = r => { const n = Math.min(5, Math.max(0, Math.round(Number(r)||0))); return Array.from({length:5}, (_,i) => `<span class="${i<n?'':'star-off'}">★</span>`).join(''); };
 const slug2url = s => `${window.location.pathname}?cat=${s}`;
 
 let _cats = null;
@@ -417,37 +469,70 @@ function createCard(ebook) {
          onerror="this.src='https://placehold.co/300x400/eee/999?text=Capa'" />
     <div class="ebook-info">
       <h3 class="ebook-title">${ebook.title}</h3>
+      ${ebook.rating > 0 ? `<div class="ebook-stars">${starsHtml(ebook.rating)}</div>` : ''}
       <div class="ebook-prices">
         ${ebook.old_price ? `<span class="ebook-old-price">${fmt(ebook.old_price)}</span>` : ''}
         <span class="ebook-new-price">${fmt(ebook.new_price)}</span>
         ${d > 0 ? `<span class="ebook-discount">-${d}%</span>` : ''}
       </div>
-      ${ebook.short_description ? `
-        <div class="ebook-desc-wrapper">
-          <button class="ebook-desc-toggle" aria-expanded="false">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Saiba mais
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:auto"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="ebook-desc-dropdown">${ebook.short_description}</div>
-        </div>
-      ` : ''}
+      ${savings(ebook.old_price, ebook.new_price) > 0 ? `<span class="ebook-savings">✔ Economize ${fmt(savings(ebook.old_price, ebook.new_price))}</span>` : ''}
+      <button class="ebook-details-btn" onclick="openDetails(${JSON.stringify(ebook).replace(/"/g,'&quot;')})">💬 Saiba mais</button>
       <a href="${ebook.checkout_url || '#'}" target="_blank" rel="noopener" class="ebook-buy-btn">🛒 Comprar Agora</a>
     </div>
   `;
 
-  // Dropdown hover + click
-  const wrap     = card.querySelector('.ebook-desc-wrapper');
-  const toggle   = card.querySelector('.ebook-desc-toggle');
-  const dropdown = card.querySelector('.ebook-desc-dropdown');
-  if (wrap && toggle && dropdown) {
-    const open  = () => { toggle.classList.add('open');    dropdown.classList.add('open');    toggle.setAttribute('aria-expanded','true');  };
-    const close = () => { toggle.classList.remove('open'); dropdown.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); };
-    wrap.addEventListener('mouseenter', open);
-    wrap.addEventListener('mouseleave', close);
-    toggle.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.contains('open') ? close() : open(); });
-  }
   return card;
+}
+
+// ============================================================
+// POPUP DETALHES (Saiba mais)
+// ============================================================
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const mdToHtml = (text='') => {
+  if(!text) return '';
+  const inline = s => escHtml(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/`(.+?)`/g,'<code>$1</code>');
+  const lines = String(text).split(/\r?\n/);
+  let out='', list=[];
+  const flush = () => { if(list.length){ out+='<ul>'+list.map(l=>`<li>${inline(l)}</li>`).join('')+'</ul>'; list=[]; } };
+  for(const raw of lines){
+    const line = raw.trimEnd();
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    if(h){ flush(); const lvl=h[1].length; out+=`<h${lvl}>${inline(h[2])}</h${lvl}>`; continue; }
+    const li = line.match(/^[-*]\s+(.*)$/);
+    if(li){ list.push(li[1]); continue; }
+    if(/^(-{3,}|_{3,}|\*{3,})$/.test(line.trim())){ flush(); out+='<hr/>'; continue; }
+    if(!line.trim()){ flush(); continue; }
+    flush(); out+=`<p>${inline(line)}</p>`;
+  }
+  flush();
+  return out;
+};
+
+function openDetails(e) {
+  if(!e) return;
+  $('#details-title').textContent     = e.title || '';
+  $('#details-cover').src              = e.cover_url || 'https://placehold.co/300x400/eee/999?text=Capa';
+  $('#details-cover').alt              = e.title || 'Capa';
+  const r = Math.min(5, Math.max(0, Math.round(Number(e.rating)||0)));
+  $('#details-stars').innerHTML        = Array.from({length:5},(_,i)=>`<span class="${i<r?'':'star-off'}">★</span>`).join('');
+  $('#details-stars').style.display    = r>0 ? 'flex' : 'none';
+  $('#details-old').textContent        = e.old_price ? fmt(e.old_price) : '';
+  $('#details-old').style.display      = e.old_price ? '' : 'none';
+  $('#details-new').textContent        = fmt(e.new_price);
+  const d = disc(e.old_price, e.new_price);
+  $('#details-discount').textContent   = d>0 ? `-${d}%` : '';
+  $('#details-discount').style.display = d>0 ? '' : 'none';
+  const sv = savings(e.old_price, e.new_price);
+  $('#details-savings').textContent    = sv>0 ? `✔ Economize ${fmt(sv)}` : '';
+  $('#details-savings').style.display  = sv>0 ? '' : 'none';
+  $('#details-buy').href               = e.checkout_url || '#';
+  $('#details-content').innerHTML      = mdToHtml(e.full_description || e.short_description || '');
+  $('#details-popup').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDetails() {
+  $('#details-popup').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 // ============================================================
@@ -572,7 +657,37 @@ document.addEventListener('click', e => {
   }
 });
 
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDetails();
+});
+
 document.addEventListener('DOMContentLoaded', init);
 </script>
+
+<div class="popup-overlay" id="details-popup" onclick="closeDetails()">
+  <div class="popup" onclick="event.stopPropagation()">
+    <button class="popup-close" onclick="closeDetails()" aria-label="Fechar">✕</button>
+    <div class="popup-grid">
+      <img id="details-cover" class="popup-cover" src="" alt="Capa" />
+      <div class="popup-body">
+        <h2 class="popup-title" id="details-title"></h2>
+        <div class="popup-stars" id="details-stars"></div>
+        <div class="popup-prices">
+          <span class="popup-old" id="details-old"></span>
+          <span class="popup-new" id="details-new"></span>
+          <span class="popup-discount" id="details-discount"></span>
+          <span class="popup-savings" id="details-savings"></span>
+        </div>
+        <a class="popup-buy" id="details-buy" target="_blank" rel="noopener">🛒 Comprar Agora</a>
+        <div class="pd-content" id="details-content"></div>
+        <div class="pd-trust">
+          <span>🔒 Compra segura</span>
+          <span>⚡ Entrega automática</span>
+          <span>✅ Produto original</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>

@@ -349,6 +349,7 @@
     font-weight: 600;
   }
   .badge-active { background: rgba(34,211,160,0.15); color: var(--green); }
+  .badge-inactive { background: rgba(155,155,170,0.15); color: var(--text-muted); }
   .badge-cat {
     background: var(--primary-glow);
     color: var(--primary);
@@ -578,16 +579,37 @@
           </div>
         </div>
 
-        <!-- URL Checkout -->
+        <!-- Avaliação (estrelas) -->
+        <div class="field">
+          <label>Avaliação (estrelas 0 a 5)</label>
+          <input type="number" id="eb-rating" placeholder="4.5" step="0.5" min="0" max="5" />
+          <small style="color:var(--text-dim)">Deixe vazio ou 0 para não exibir estrelas no card.</small>
+        </div>
+
+        <!-- Link de pagamento -->
         <div class="field form-full">
-          <label>URL de Checkout *</label>
-          <input type="url" id="eb-checkout" placeholder="https://pay.hotmart.com/seu-produto" />
+          <label>Link de Pagamento (Checkout) *</label>
+          <input type="url" id="eb-checkout" placeholder="https://mpago.li/2JmGZzw (link do Mercado Pago)" />
+          <small style="color:var(--text-dim)">Cole o link de pagamento criado no Mercado Pago (mpago.li) ou outra plataforma. É esse link que o botão de compra abre.</small>
+        </div>
+
+        <!-- Link de download -->
+        <div class="field form-full">
+          <label>Link de Download do Ebook</label>
+          <input type="url" id="eb-download" placeholder="https://... (URL do arquivo PDF do ebook)" />
+          <small style="color:var(--text-dim)">URL do arquivo do ebook (PDF). Aparece no botão de download da página "Obrigado pela compra".</small>
         </div>
 
         <!-- Descrição -->
         <div class="field form-full">
           <label>Mini Descrição (aparece no hover)</label>
           <textarea id="eb-desc" placeholder="Descrição curta que aparece quando o cliente passa o mouse sobre o ebook..."></textarea>
+        </div>
+
+        <!-- Descrição completa -->
+        <div class="field form-full">
+          <label>Descrição Completa (abre no popup "Saiba mais")</label>
+          <textarea id="eb-full-desc" rows="6" placeholder="Descrição longa mostrada no popup. Aceita markdown: # Título, ## Seção, **negrito**, - item de lista, --- divisor..."></textarea>
         </div>
 
         <!-- Capa -->
@@ -707,8 +729,8 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Preview</th><th>Título</th><th>Subtítulo</th><th>Ordem</th><th>Ações</th></tr></thead>
-          <tbody id="banners-tbody"><tr><td colspan="5"><div class="empty">⏳ Carregando...</div></td></tr></tbody>
+          <thead><tr><th>Preview</th><th>Título</th><th>Subtítulo</th><th>Ordem</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="banners-tbody"><tr><td colspan="6"><div class="empty">⏳ Carregando...</div></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -844,8 +866,12 @@
           <select id="edit-category"></select>
         </div>
         <div class="field">
-          <label>URL de Checkout *</label>
-          <input type="url" id="edit-checkout" placeholder="https://..." />
+          <label>Link de Pagamento (Checkout) *</label>
+          <input type="url" id="edit-checkout" placeholder="https://mpago.li/2JmGZzw" />
+        </div>
+        <div class="field">
+          <label>Link de Download do Ebook</label>
+          <input type="url" id="edit-download" placeholder="https://... (URL do PDF)" />
         </div>
         <div class="field">
           <label>Preço Antigo (De:)</label>
@@ -861,9 +887,17 @@
             <input type="number" id="edit-new-price" placeholder="39,90" step="0.01" min="0" />
           </div>
         </div>
+        <div class="field">
+          <label>Avaliação (estrelas 0 a 5)</label>
+          <input type="number" id="edit-rating" placeholder="4.5" step="0.5" min="0" max="5" />
+        </div>
         <div class="field form-full">
           <label>Mini Descrição</label>
           <textarea id="edit-desc" placeholder="Descrição curta do ebook..."></textarea>
+        </div>
+        <div class="field form-full">
+          <label>Descrição Completa (popup "Saiba mais")</label>
+          <textarea id="edit-full-desc" rows="6" placeholder="Descrição longa, aceita markdown..."></textarea>
         </div>
         <div class="field">
           <label>Status</label>
@@ -886,6 +920,65 @@
 
 <!-- TOAST -->
 <div id="toast-container"></div>
+
+<!-- MODAL: EDITAR BANNER -->
+<div class="modal-overlay" id="banner-edit-modal" onclick="closeBannerEditModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>✏️ Editar Banner</h3>
+      <button class="modal-close" onclick="closeBannerEditModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="edit-cover-row">
+        <img id="edit-banner-preview" class="edit-cover-img" style="width:170px;height:48px;object-fit:cover" src="" alt="Banner" />
+        <div class="edit-cover-right">
+          <div class="field">
+            <label>Trocar imagem do banner</label>
+            <input type="file" id="edit-banner-file" accept="image/*" onchange="previewBannerEditCover(this)" />
+          </div>
+          <div class="field">
+            <label>Ou cole uma URL de imagem</label>
+            <input type="url" id="edit-banner-url" placeholder="https://..." oninput="previewBannerEditUrl(this.value)" />
+          </div>
+        </div>
+      </div>
+
+      <input type="hidden" id="edit-banner-id" />
+      <div class="form-grid">
+        <div class="field form-full">
+          <label>Título</label>
+          <input type="text" id="edit-banner-title" placeholder="Ex: Promoção Especial" />
+        </div>
+        <div class="field">
+          <label>Subtítulo</label>
+          <input type="text" id="edit-banner-subtitle" placeholder="Até 60% de desconto" />
+        </div>
+        <div class="field">
+          <label>URL do Link (ao clicar)</label>
+          <input type="url" id="edit-banner-link" placeholder="https://..." />
+        </div>
+        <div class="field">
+          <label>Ordem de exibição</label>
+          <input type="number" id="edit-banner-order" placeholder="1" min="1" />
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="edit-banner-active">
+            <option value="true">✅ Ativo (visível no site)</option>
+            <option value="false">🚫 Inativo (oculto)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="saveBannerEdit()">
+        <div class="spinner" id="spinner-edit-banner"></div>
+        <span>💾 Salvar Alterações</span>
+      </button>
+      <button class="btn btn-ghost" onclick="closeBannerEditModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── SUPABASE ──
@@ -1059,7 +1152,10 @@ async function addEbook() {
   const old_price  = parseFloat(document.getElementById('eb-old-price').value) || null;
   const new_price  = parseFloat(document.getElementById('eb-new-price').value);
   const checkout_url = document.getElementById('eb-checkout').value.trim();
+  const download_url = document.getElementById('eb-download').value.trim();
+  const rating = parseFloat(document.getElementById('eb-rating').value) || null;
   const short_description = document.getElementById('eb-desc').value.trim();
+  const full_description = document.getElementById('eb-full-desc').value.trim();
   
 
   if(!title) return toast('Preencha o título', 'error');
@@ -1100,8 +1196,8 @@ async function addEbook() {
     }
 
     const { error } = await sb.from('ebooks').insert({
-      title, category_id, old_price, new_price, checkout_url,
-      short_description, cover_url, active: true, sort_order: 0
+      title, category_id, old_price, new_price, checkout_url, download_url, rating,
+      short_description, full_description, cover_url, active: true, sort_order: 0
     });
 
     if(error) throw error;
@@ -1116,7 +1212,7 @@ async function addEbook() {
 }
 
 function clearEbookForm() {
-  ['eb-title','eb-author','eb-old-price','eb-new-price','eb-checkout','eb-desc','eb-cover-url'].forEach(id => {
+  ['eb-title','eb-author','eb-old-price','eb-new-price','eb-rating','eb-checkout','eb-download','eb-desc','eb-full-desc','eb-cover-url'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('eb-category').selectedIndex = 0;
@@ -1129,14 +1225,18 @@ function clearEbookForm() {
 async function loadBanners() {
   const { data } = await sb.from('banners').select('*').order('sort_order');
   const tbody = document.getElementById('banners-tbody');
-  if(!data?.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty">📭 Nenhum banner cadastrado</div></td></tr>'; return; }
+  if(!data?.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty">📭 Nenhum banner cadastrado</div></td></tr>'; return; }
   tbody.innerHTML = data.map(b => `
     <tr>
       <td><img class="td-cover" style="width:80px;height:40px;object-fit:cover" src="${b.image_url}" /></td>
       <td class="td-title">${b.title || '—'}</td>
       <td style="color:var(--text-muted);font-size:0.82rem">${b.subtitle || '—'}</td>
       <td>${b.sort_order}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="deleteRow('banners','${b.id}',loadBanners)">🗑</button></td>
+      <td><span class="badge badge-${b.active !== false ? 'active' : 'inactive'}">${b.active !== false ? 'Ativo' : 'Inativo'}</span></td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="openBannerEditModal(${JSON.stringify(b).replace(/"/g,'&quot;')})">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRow('banners','${b.id}',loadBanners)">🗑</button>
+      </td>
     </tr>
   `).join('');
 }
@@ -1166,6 +1266,81 @@ async function addBanner() {
   const prev = document.getElementById('banner-preview');
   prev.style.display='none'; prev.src='';
   await Promise.all([loadBanners(), loadStats()]);
+}
+
+// ── EDIÇÃO DE BANNERS ──
+function openBannerEditModal(b) {
+  document.getElementById('edit-banner-id').value      = b.id;
+  document.getElementById('edit-banner-title').value   = b.title || '';
+  document.getElementById('edit-banner-subtitle').value= b.subtitle || '';
+  document.getElementById('edit-banner-link').value    = b.link_url || '';
+  document.getElementById('edit-banner-order').value   = b.sort_order || 1;
+  document.getElementById('edit-banner-active').value  = String(b.active !== false);
+  document.getElementById('edit-banner-url').value     = b.image_url || '';
+  document.getElementById('edit-banner-preview').src   = b.image_url || 'https://placehold.co/420x120/22222d/6b6b80?text=?';
+  document.getElementById('edit-banner-file').value    = '';
+
+  document.getElementById('banner-edit-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBannerEditModal(event) {
+  if(event && event.target !== document.getElementById('banner-edit-modal')) return;
+  document.getElementById('banner-edit-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function previewBannerEditCover(input) {
+  if(!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('edit-banner-preview').src = e.target.result;
+    document.getElementById('edit-banner-url').value = '';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function previewBannerEditUrl(url) {
+  if(!url) return;
+  document.getElementById('edit-banner-preview').src = url;
+  document.getElementById('edit-banner-file').value = '';
+}
+
+async function saveBannerEdit() {
+  const id        = document.getElementById('edit-banner-id').value;
+  const title     = document.getElementById('edit-banner-title').value.trim();
+  const subtitle  = document.getElementById('edit-banner-subtitle').value.trim();
+  const link_url  = document.getElementById('edit-banner-link').value.trim();
+  const sort_order = parseInt(document.getElementById('edit-banner-order').value) || 1;
+  const active    = document.getElementById('edit-banner-active').value === 'true';
+
+  let image_url = document.getElementById('edit-banner-url').value.trim();
+  const file = document.getElementById('edit-banner-file').files[0];
+
+  const sp = document.getElementById('spinner-edit-banner');
+  sp.style.display = 'block';
+
+  try {
+    if(file) {
+      try { image_url = await uploadImage(file, 'banners'); }
+      catch { /* mantém URL manual se já preenchida */ }
+    }
+    if(!image_url) return toast('Adicione uma imagem ou URL para o banner', 'error');
+
+    const updates = { title, subtitle, link_url, sort_order, active };
+    if(image_url) updates.image_url = image_url;
+
+    const { error } = await sb.from('banners').update(updates).eq('id', id);
+    if(error) throw error;
+
+    toast('Banner atualizado com sucesso! ✓');
+    closeBannerEditModal();
+    await Promise.all([loadBanners(), loadStats()]);
+  } catch(e) {
+    toast('Erro ao salvar: ' + e.message, 'error');
+  } finally {
+    sp.style.display = 'none';
+  }
 }
 
 // ── CONFIG ──
@@ -1234,9 +1409,12 @@ function openEditModal(e) {
   document.getElementById('edit-id').value          = e.id;
   document.getElementById('edit-title').value       = e.title || '';
   document.getElementById('edit-checkout').value    = e.checkout_url || '';
+  document.getElementById('edit-download').value    = e.download_url || '';
   document.getElementById('edit-old-price').value   = e.old_price || '';
   document.getElementById('edit-new-price').value   = e.new_price || '';
+  document.getElementById('edit-rating').value      = e.rating || '';
   document.getElementById('edit-desc').value        = e.short_description || '';
+  document.getElementById('edit-full-desc').value   = e.full_description || '';
   document.getElementById('edit-active').value      = String(e.active !== false);
   document.getElementById('edit-cover-url').value   = e.cover_url || '';
   document.getElementById('edit-cover-preview').src = e.cover_url || 'https://placehold.co/80x106/22222d/6b6b80?text=?';
@@ -1274,9 +1452,12 @@ async function saveEdit() {
   const title        = document.getElementById('edit-title').value.trim();
   const category_id  = document.getElementById('edit-category').value;
   const checkout_url = document.getElementById('edit-checkout').value.trim();
+  const download_url = document.getElementById('edit-download').value.trim();
   const old_price    = parseFloat(document.getElementById('edit-old-price').value) || null;
   const new_price    = parseFloat(document.getElementById('edit-new-price').value);
+  const rating       = parseFloat(document.getElementById('edit-rating').value) || null;
   const short_description = document.getElementById('edit-desc').value.trim();
+  const full_description = document.getElementById('edit-full-desc').value.trim();
   const active       = document.getElementById('edit-active').value === 'true';
 
   if(!title) return toast('Preencha o título', 'error');
@@ -1304,7 +1485,7 @@ async function saveEdit() {
       }
     }
 
-    const updates = { title, category_id, checkout_url, old_price, new_price, short_description, active };
+    const updates = { title, category_id, checkout_url, download_url, old_price, new_price, rating, short_description, full_description, active };
     if(cover_url) updates.cover_url = cover_url;
 
     const { error } = await sb.from('ebooks').update(updates).eq('id', id);

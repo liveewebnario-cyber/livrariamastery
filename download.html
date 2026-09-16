@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Baixar Ebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --green: #22c55e;
+    --blue: #3b82f6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    max-width: 420px;
+    width: 100%;
+    padding: 32px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(34,197,94,0.15);
+    color: var(--green);
+    border: 1px solid rgba(34,197,94,0.35);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  .cover {
+    border-radius: 12px;
+    width: 190px;
+    height: 253px;
+    object-fit: cover;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    margin-bottom: 22px;
+  }
+  h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+  .desc { color: var(--muted); font-size: 0.92rem; line-height: 1.55; margin-bottom: 24px; }
+  .download-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    background: var(--green);
+    color: #06200e;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.15s, filter 0.15s;
+  }
+  .download-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .download-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .download-btn svg { flex-shrink: 0; }
+  .hint { margin-top: 14px; font-size: 0.78rem; color: var(--muted); }
+  .back-link { display: inline-block; margin-top: 24px; color: var(--blue); text-decoration: none; font-size: 0.85rem; }
+  .loading { color: var(--muted); font-family: 'DM Mono', monospace; }
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="loading" id="status">Carregando seu produto...</div>
+  </div>
+
+<script>
+  // ============================================================
+  // CONFIGURAÇÕES SUPABASE
+  // ============================================================
+  const SUPABASE_URL  = 'https://cghrmeckjzjzgpgcgiot.supabase.co';
+  const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNnaHJtZWNranpqemdwZ2NnaW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0OTc3MDUsImV4cCI6MjEwNTA3MzcwNX0.sIM_w8C31JwXJq2bm2h-69hhAOehBYuWtTUEUqKItyM';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const params = new URLSearchParams(window.location.search);
+  const ebookId = params.get('id');
+
+  async function load() {
+    const card = document.getElementById('card');
+    if (!ebookId) {
+      card.innerHTML = `
+        <h1>Link inválido</h1>
+        <p class="desc">Não foi possível identificar o produto. Use o link de download completo com o ID do ebook.</p>
+        <a class="back-link" href="./">← Voltar para a loja</a>`;
+      return;
+    }
+
+    const { data, error } = await sb.from('ebooks').select('title, cover_url, short_description, new_price, download_url').eq('id', ebookId).maybeSingle();
+    if (error || !data) {
+      card.innerHTML = `
+        <h1>Ebook não encontrado</h1>
+        <p class="desc">Este produto não existe ou o acesso não está disponível.</p>
+        <a class="back-link" href="./">← Voltar para a loja</a>`;
+      return;
+    }
+
+    const hasDownload = data.download_url && data.download_url.startsWith('http');
+    const price = data.new_price ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.new_price) : '';
+
+    card.innerHTML = `
+      <span class="badge">✓ Pagamento confirmado</span>
+      <div><img class="cover" src="${data.cover_url || 'https://placehold.co/300x400/1e293b/64748b?text=Sem+Capa'}" alt="${data.title || 'Ebook'}" /></div>
+      <h1>Obrigado pela compra!</h1>
+      <p class="desc">Seu download de <strong>${data.title || ''}</strong>${price ? ' (valor pago: ' + price + ')' : ''} está liberado.</p>
+      ${hasDownload
+        ? `<a class="download-btn" href="${data.download_url}" target="_blank" rel="noopener">
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+             Baixar Ebook
+           </a>
+           <p class="hint">Não iniciou? <a href="${data.download_url}" target="_blank" rel="noopener" style="color:var(--green)">Clique aqui</a> para baixar novamente.</p>`
+        : `<button class="download-btn" disabled>
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+             Link de download em breve
+           </button>
+           <p class="hint">O link de download ainda não foi configurado. Entre em contato com o suporte.</p>`}
+      <br/>
+      <a class="back-link" href="./">← Voltar para a loja</a>`;
+  }
+
+  load();
+</script>
+</body>
+</html>
