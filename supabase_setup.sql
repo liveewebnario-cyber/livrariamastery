@@ -97,6 +97,8 @@ CREATE TABLE IF NOT EXISTS ebooks (
   checkout_url TEXT DEFAULT '#',
   download_url TEXT DEFAULT '',
   rating NUMERIC(2,1) DEFAULT NULL,
+  video_url TEXT DEFAULT '',
+  audio_url TEXT DEFAULT '',
   badge TEXT DEFAULT '',
   active BOOLEAN DEFAULT TRUE,
   featured BOOLEAN DEFAULT FALSE,

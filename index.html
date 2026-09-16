@@ -167,6 +167,16 @@ img { max-width: 100%; display: block; }
 .pd-content code { background: #f1f5f9; padding: .1em .4em; border-radius: 4px; font-size: .85em; color: #0d47a1; }
 .pd-trust { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border-top: 1px solid #eef0f2; margin-top: 18px; padding-top: 14px; font-size: .72rem; color: #64748b; }
 .pd-trust span { display: flex; align-items: center; gap: 5px; }
+
+/* Popup media (vídeo/áudio) */
+.media-popup { background: #0f172a; color: #fff; border-radius: 14px; width: 100%; max-width: 680px; max-height: 92vh; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+.media-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #1e293b; }
+.media-back { display: flex; align-items: center; gap: 6px; background: #1e293b; color: #fff; border: none; font-weight: 700; font-size: .9rem; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: var(--tr); }
+.media-back:hover { background: #334155; }
+.media-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .9rem; color: #cbd5e1; }
+.media-body { padding: 16px; }
+.media-body video { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 10px; display: block; }
+.media-body audio { width: 100%; }
 @media (max-width: 640px) {
   .popup-grid { grid-template-columns: 1fr; }
   .popup-cover { max-width: 200px; margin: 0 auto; border-radius: 10px; }
@@ -205,6 +215,13 @@ img { max-width: 100%; display: block; }
   border: 1px solid rgba(25,118,210,.35); cursor: pointer; transition: var(--tr);
 }
 .ebook-details-btn:hover { background: var(--primary); color: #fff; }
+.ebook-media-btn {
+  display: block; width: 100%; padding: 11px; margin-top: 8px;
+  background: rgba(156,39,176,.12); color: #8E24AA; text-align: center;
+  font-weight: 700; font-size: .95rem; border-radius: 8px;
+  border: 1px solid rgba(156,39,176,.35); cursor: pointer; transition: var(--tr);
+}
+.ebook-media-btn:hover { background: #8E24AA; color: #fff; }
 
 /* HOME HERO */
 .home-hero { text-align: center; padding: 50px 20px 20px; max-width: 700px; margin: 0 auto; }
@@ -253,8 +270,15 @@ img { max-width: 100%; display: block; }
   .footer-inner { grid-template-columns: 1fr; }
   .banner-arrow { display: none; }
 }
-@media (max-width: 420px) { .ebooks-grid { grid-template-columns: 1fr; } }
+@media (max-width: 480px) {
+  .ebooks-grid { grid-template-columns: repeat(2,1fr); gap: 12px; }
+  .ebook-cover { aspect-ratio: 3/4; }
+  .ebook-info { padding: 10px; }
+  .ebook-title { font-size: .85rem; }
+  .ebook-new-price { font-size: 1rem; }
+}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 </head>
 <body>
 
@@ -477,6 +501,7 @@ function createCard(ebook) {
       </div>
       ${savings(ebook.old_price, ebook.new_price) > 0 ? `<span class="ebook-savings">✔ Economize ${fmt(savings(ebook.old_price, ebook.new_price))}</span>` : ''}
       <button class="ebook-details-btn" onclick="openDetails(${JSON.stringify(ebook).replace(/"/g,'&quot;')})">💬 Saiba mais</button>
+      ${ebook.video_url || ebook.audio_url ? `<button class="ebook-media-btn" onclick="openMedia(${JSON.stringify(ebook).replace(/"/g,'&quot;')})">${ebook.video_url ? '▶ Ver prévia' : '🎧 Ouvir prévia'}</button>` : ''}
       <a href="${ebook.checkout_url || '#'}" target="_blank" rel="noopener" class="ebook-buy-btn">🛒 Comprar Agora</a>
     </div>
   `;
@@ -532,6 +557,54 @@ function openDetails(e) {
 }
 function closeDetails() {
   $('#details-popup').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ============================================================
+// POPUP MÍDIA (vídeo/áudio com botão voltar)
+// ============================================================
+function openMedia(e) {
+  if(!e) return;
+  const isVideo = !!e.video_url;
+  $('#media-title').textContent = e.title || '';
+  const body = document.getElementById('media-body');
+  body.innerHTML = '';
+  if (window._mpHls) { try { window._mpHls.destroy(); } catch(e){} window._mpHls = null; }
+
+  if (isVideo) {
+    const v = document.createElement('video');
+    v.controls = true;
+    v.controlsList = 'nodownload';
+    v.src = '';
+    body.appendChild(v);
+    if (e.video_url.includes('.m3u8')) {
+      if (window.Hls && Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(e.video_url);
+        hls.attachMedia(v);
+        window._mpHls = hls;
+      } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
+        v.src = e.video_url;
+      } else {
+        body.innerHTML = '<p style="color:#fbbf24;text-align:center;padding:30px 10px">Seu navegador não suporta este vídeo.</p>';
+      }
+    } else {
+      v.src = e.video_url;
+    }
+  } else {
+    const a = document.createElement('audio');
+    a.controls = true;
+    a.src = e.audio_url;
+    body.appendChild(a);
+  }
+
+  $('#media-popup').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeMedia() {
+  if (window._mpHls) { try { window._mpHls.destroy(); } catch(e){} window._mpHls = null; }
+  document.getElementById('media-body').innerHTML = '';
+  $('#media-popup').classList.remove('open');
   document.body.style.overflow = '';
 }
 
@@ -658,7 +731,7 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeDetails();
+  if (e.key === 'Escape') { closeDetails(); closeMedia(); }
 });
 
 document.addEventListener('DOMContentLoaded', init);
@@ -687,6 +760,15 @@ document.addEventListener('DOMContentLoaded', init);
         <div class="pd-content" id="details-content"></div>
       </div>
     </div>
+  </div>
+</div>
+<div class="popup-overlay" id="media-popup" onclick="closeMedia()">
+  <div class="media-popup" onclick="event.stopPropagation()">
+    <div class="media-head">
+      <button class="media-back" onclick="closeMedia()">← Voltar</button>
+      <span class="media-title" id="media-title"></span>
+    </div>
+    <div class="media-body" id="media-body"></div>
   </div>
 </div>
 </body>

@@ -600,6 +600,20 @@
           <small style="color:var(--text-dim)">URL do arquivo do ebook (PDF). Aparece no botão de download da página "Obrigado pela compra".</small>
         </div>
 
+        <!-- Video -->
+        <div class="field form-full">
+          <label>Video (Gumlet .m3u8) — aparece botão de player no card</label>
+          <input type="url" id="eb-video" placeholder="https://video.gumlet.io/.../main.m3u8" />
+          <small style="color:var(--text-dim)">Opcional. Abre um mini player de vídeo no site.</small>
+        </div>
+
+        <!-- Audio -->
+        <div class="field form-full">
+          <label>Audio (Jukehost / mp3) — aparece botão de player no card</label>
+          <input type="url" id="eb-audio" placeholder="https://audio.jukehost.co.uk/..." />
+          <small style="color:var(--text-dim)">Opcional. Abre um mini player de áudio no site.</small>
+        </div>
+
         <!-- Descrição -->
         <div class="field form-full">
           <label>Mini Descrição (aparece no hover)</label>
@@ -872,6 +886,14 @@
         <div class="field">
           <label>Link de Download do Ebook</label>
           <input type="url" id="edit-download" placeholder="https://... (URL do PDF)" />
+        </div>
+        <div class="field">
+          <label>Video (Gumlet .m3u8)</label>
+          <input type="url" id="edit-video" placeholder="https://video.gumlet.io/.../main.m3u8" />
+        </div>
+        <div class="field">
+          <label>Audio (Jukehost / mp3)</label>
+          <input type="url" id="edit-audio" placeholder="https://audio.jukehost.co.uk/..." />
         </div>
         <div class="field">
           <label>Preço Antigo (De:)</label>
@@ -1153,6 +1175,8 @@ async function addEbook() {
   const new_price  = parseFloat(document.getElementById('eb-new-price').value);
   const checkout_url = document.getElementById('eb-checkout').value.trim();
   const download_url = document.getElementById('eb-download').value.trim();
+  const video_url = document.getElementById('eb-video').value.trim();
+  const audio_url = document.getElementById('eb-audio').value.trim();
   const rating = parseFloat(document.getElementById('eb-rating').value) || null;
   const short_description = document.getElementById('eb-desc').value.trim();
   const full_description = document.getElementById('eb-full-desc').value.trim();
@@ -1197,7 +1221,7 @@ async function addEbook() {
 
     const { error } = await sb.from('ebooks').insert({
       title, category_id, old_price, new_price, checkout_url, download_url, rating,
-      short_description, full_description, cover_url, active: true, sort_order: 0
+      short_description, full_description, cover_url, video_url, audio_url, active: true, sort_order: 0
     });
 
     if(error) throw error;
@@ -1212,7 +1236,7 @@ async function addEbook() {
 }
 
 function clearEbookForm() {
-  ['eb-title','eb-author','eb-old-price','eb-new-price','eb-rating','eb-checkout','eb-download','eb-desc','eb-full-desc','eb-cover-url'].forEach(id => {
+  ['eb-title','eb-author','eb-old-price','eb-new-price','eb-rating','eb-checkout','eb-download','eb-video','eb-audio','eb-desc','eb-full-desc','eb-cover-url'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('eb-category').selectedIndex = 0;
@@ -1410,6 +1434,8 @@ function openEditModal(e) {
   document.getElementById('edit-title').value       = e.title || '';
   document.getElementById('edit-checkout').value    = e.checkout_url || '';
   document.getElementById('edit-download').value    = e.download_url || '';
+  document.getElementById('edit-video').value       = e.video_url || '';
+  document.getElementById('edit-audio').value       = e.audio_url || '';
   document.getElementById('edit-old-price').value   = e.old_price || '';
   document.getElementById('edit-new-price').value   = e.new_price || '';
   document.getElementById('edit-rating').value      = e.rating || '';
@@ -1453,6 +1479,8 @@ async function saveEdit() {
   const category_id  = document.getElementById('edit-category').value;
   const checkout_url = document.getElementById('edit-checkout').value.trim();
   const download_url = document.getElementById('edit-download').value.trim();
+  const video_url = document.getElementById('edit-video').value.trim();
+  const audio_url = document.getElementById('edit-audio').value.trim();
   const old_price    = parseFloat(document.getElementById('edit-old-price').value) || null;
   const new_price    = parseFloat(document.getElementById('edit-new-price').value);
   const rating       = parseFloat(document.getElementById('edit-rating').value) || null;
@@ -1485,7 +1513,7 @@ async function saveEdit() {
       }
     }
 
-    const updates = { title, category_id, checkout_url, download_url, old_price, new_price, rating, short_description, full_description, active };
+    const updates = { title, category_id, checkout_url, download_url, old_price, new_price, rating, short_description, full_description, video_url, audio_url, active };
     if(cover_url) updates.cover_url = cover_url;
 
     const { error } = await sb.from('ebooks').update(updates).eq('id', id);

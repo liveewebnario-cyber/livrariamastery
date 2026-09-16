@@ -30,7 +30,7 @@
         </div>
 
         <!-- 4-Column Grid -->
-        <div id="ebooks-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div id="ebooks-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             <!-- Ebook cards injected by JS -->
             <?php for ($i = 0; $i < 4; $i++): ?>
                 <div class="animate-pulse bg-gray-800 rounded-xl h-96"></div>

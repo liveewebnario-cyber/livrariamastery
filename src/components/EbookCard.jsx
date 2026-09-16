@@ -1,6 +1,28 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Eye, Star, X, ShieldCheck, Zap, BadgeCheck } from 'lucide-react';
+import { ShoppingCart, Eye, Star, X, ShieldCheck, Zap, BadgeCheck, Play, Headphones, ArrowLeft } from 'lucide-react';
+import Hls from 'hls.js';
+
+const HlsVideo = ({ src }) => {
+    const ref = useRef(null);
+    useEffect(() => {
+        const el = ref.current;
+        if (!el || !src) return;
+        if (src.includes('.m3u8')) {
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(src);
+                hls.attachMedia(el);
+                return () => hls.destroy();
+            } else if (el.canPlayType('application/vnd.apple.mpegurl')) {
+                el.src = src;
+            }
+        } else {
+            el.src = src;
+        }
+    }, [src]);
+    return <video ref={ref} controls className="w-full aspect-video bg-black rounded-xl" controlsList="nodownload" />;
+};
 
 const renderMarkdown = (text = '') => {
     if (!text) return '';
@@ -52,6 +74,7 @@ const renderMarkdown = (text = '') => {
 
 const EbookCard = ({ ebook }) => {
     const [open, setOpen] = useState(false);
+    const [media, setMedia] = useState(null);
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat('pt-BR', {
@@ -148,6 +171,16 @@ const EbookCard = ({ ebook }) => {
                             >
                                 <ShoppingCart size={20} />
                             </button>
+                            {(ebook.video_url || ebook.audio_url) && (
+                                <button
+                                    onClick={() => setMedia(ebook.video_url ? 'video' : 'audio')}
+                                    className="bg-purple-600/90 hover:bg-purple-500 text-white px-3 py-2 rounded-lg transition-colors text-xs font-semibold flex items-center justify-center gap-1.5"
+                                    title={ebook.video_url ? 'Assistir vídeo' : 'Ouvir áudio'}
+                                >
+                                    {ebook.video_url ? <Play size={14} /> : <Headphones size={14} />}
+                                    {ebook.video_url ? 'Vídeo' : 'Áudio'}
+                                </button>
+                            )}
                             <button
                                 onClick={() => setOpen(true)}
                                 className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg transition-colors text-sm font-semibold"
@@ -261,6 +294,46 @@ const EbookCard = ({ ebook }) => {
                                         />
                                     )}
                                 </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        {/* ── POPUP MÍDIA (vídeo/áudio) ── */}
+            <AnimatePresence>
+                {media && (
+                    <motion.div
+                        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setMedia(null)}
+                    >
+                        <motion.div
+                            className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl shadow-2xl"
+                            initial={{ scale: 0.95, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.95, y: 20 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center gap-3 p-4 border-b border-slate-800">
+                                <button
+                                    onClick={() => setMedia(null)}
+                                    className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                                >
+                                    <ArrowLeft size={16} />
+                                    Voltar
+                                </button>
+                                <span className="text-sm text-slate-300 truncate">{ebook.title}</span>
+                            </div>
+                            <div className="p-4">
+                                {media === 'video'
+                                    ? <HlsVideo src={ebook.video_url} />
+                                    : (
+                                        <div className="flex items-center justify-center py-8">
+                                            <audio controls src={ebook.audio_url} className="w-full" />
+                                        </div>
+                                    )}
                             </div>
                         </motion.div>
                     </motion.div>
