@@ -197,11 +197,6 @@ document.addEventListener('DOMContentLoaded', function () {
             <button onclick="closeEbookPopup()" class="absolute top-3 right-3 z-10 bg-gray-800 hover:bg-gray-700 text-gray-400 w-9 h-9 rounded-full text-lg font-bold" aria-label="Fechar">✕</button>
             <div class="sm:w-60 shrink-0">
                 <img src="${e.cover_url || 'https://via.placeholder.com/300x400?text=Capa'}" class="w-full aspect-[3/4] object-cover" alt="${escP(e.title)}">
-                <div class="hidden sm:grid p-4 grid-cols-3 gap-2 text-[.68rem] text-gray-400 border-t border-gray-700">
-                    <span>🔒 Compra segura</span>
-                    <span>⚡ Entrega automática</span>
-                    <span>✅ Produto original</span>
-                </div>
             </div>
             <div class="p-6 flex-1">
                 <h2 class="text-xl font-black text-white mb-1 pr-8">${escP(e.title)}</h2>
@@ -212,13 +207,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${d > 0 ? `<span class="text-xs font-bold bg-green-500/20 text-green-300 px-2 py-1 rounded">-${d}%</span>` : ''}
                     ${save > 0 ? `<span class="basis-full text-xs font-semibold text-green-300">✔ Economize R$ ${save.toFixed(2).replace('.', ',')}</span>` : ''}
                 </div>
-                <a href="${e.checkout_url || '#'}" target="_blank" class="block w-full text-center py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/40 mb-4">COMPRAR AGORA</a>
-                <div class="pd-popup-content">${mdToP(e.full_description || e.short_description || '')}</div>
-                <div class="sm:hidden mt-4 pt-4 border-t border-gray-700 grid grid-cols-3 gap-2 text-[.68rem] text-gray-400">
+                <div class="grid grid-cols-3 gap-2 text-[.68rem] text-gray-400 mb-4 pt-4 border-t border-gray-700">
                     <span>🔒 Compra segura</span>
                     <span>⚡ Entrega automática</span>
                     <span>✅ Produto original</span>
                 </div>
+                <a href="${e.checkout_url || '#'}" target="_blank" class="block w-full text-center py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-900/40 mb-4">COMPRAR AGORA</a>
+                <div class="pd-popup-content">${mdToP(e.full_description || e.short_description || '')}</div>
             </div>
         </div>`;
         ov.style.display = 'flex';

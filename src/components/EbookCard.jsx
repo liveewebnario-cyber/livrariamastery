@@ -234,6 +234,18 @@ const EbookCard = ({ ebook }) => {
                                         )}
                                     </div>
 
+                                    <div className="grid grid-cols-3 gap-2 text-[0.7rem] text-slate-400 mb-4 pt-4 border-t border-slate-800">
+                                        <span className="flex items-center gap-1.5">
+                                            <ShieldCheck size={15} className="text-emerald-400" /> Compra segura
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <Zap size={15} className="text-yellow-400" /> Entrega automática
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <BadgeCheck size={15} className="text-blue-400" /> Produto original
+                                        </span>
+                                    </div>
+
                                     <button
                                         onClick={() => window.open(ebook.checkout_url, '_blank')}
                                         className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-lg shadow-blue-900/30 flex items-center justify-center gap-2 mb-4"
@@ -248,18 +260,6 @@ const EbookCard = ({ ebook }) => {
                                             dangerouslySetInnerHTML={{ __html: renderMarkdown(description) }}
                                         />
                                     )}
-
-                                    <div className="mt-5 pt-4 border-t border-slate-800 grid grid-cols-3 gap-2 text-[0.7rem] text-slate-400">
-                                        <span className="flex items-center gap-1.5">
-                                            <ShieldCheck size={15} className="text-emerald-400" /> Compra segura
-                                        </span>
-                                        <span className="flex items-center gap-1.5">
-                                            <Zap size={15} className="text-yellow-400" /> Entrega automática
-                                        </span>
-                                        <span className="flex items-center gap-1.5">
-                                            <BadgeCheck size={15} className="text-blue-400" /> Produto original
-                                        </span>
-                                    </div>
                                 </div>
                             </div>
                         </motion.div>
