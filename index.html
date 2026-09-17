@@ -758,6 +758,8 @@ async function loadHome() {
     console.error('featured:', err);
   }
 
+  await renderThematicShelves(main);
+
   for (const cat of cats) {
     const sec = document.createElement('section');
     sec.className = 'category-section container';
@@ -802,15 +804,111 @@ async function loadCategoryPage(slug) {
 }
 
 // ============================================================
+// FILEIRAS TEMÁTICAS (Ofertas / Lançamentos / Mais avaliados)
+// ============================================================
+let _allBooks = null;
+async function getAllBooks() {
+  if (_allBooks) return _allBooks;
+  const { data, error } = await sb.from('ebooks').select('*')
+    .eq('active', true).order('created_at', { ascending: false }).limit(200);
+  if (error) throw new Error(error.message);
+  _allBooks = data || [];
+  return _allBooks;
+}
+
+function shelfLists(books) {
+  const ofertas = books
+    .filter(e => e.old_price && e.new_price && e.old_price > e.new_price)
+    .sort((a, b) => disc(b.old_price, b.new_price) - disc(a.old_price, a.new_price));
+  const lancamentos = [...books].slice(0, 4);
+  const top = [...books].filter(e => Number(e.rating) > 0)
+    .sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+  return { ofertas, lancamentos, top };
+}
+
+async function renderThematicShelves(main) {
+  try {
+    const books = await getAllBooks();
+    if (!books.length) return;
+    const { ofertas, lancamentos, top } = shelfLists(books);
+
+    const shelves = [
+      { key: 'ofertas', title: '🔥 Ofertas da Semana', items: ofertas, empty: false },
+      { key: 'lancamentos', title: '🆕 Lançamentos', items: lancamentos, empty: true },
+      { key: 'top', title: '⭐ Mais Avaliados', items: top, empty: true },
+    ];
+
+    for (const s of shelves) {
+      if (!s.empty && !s.items.length) continue;
+      const sec = document.createElement('section');
+      sec.className = 'category-section container';
+      sec.innerHTML = `
+        <div class="category-header">
+          <div>
+            <h2 class="section-title">${s.title}</h2>
+            <div class="section-divider"></div>
+          </div>
+          <a href="?view=${s.key}" class="view-all-link">Ver lista completa →</a>
+        </div>
+        <div class="ebooks-grid"></div>`;
+      const grid = sec.querySelector('.ebooks-grid');
+      (s.items.slice(0, 4)).forEach(e => grid.appendChild(createCard(e)));
+      main.appendChild(sec);
+    }
+  } catch (err) { console.error('shelves:', err); }
+}
+
+async function loadViewPage(view) {
+  const main = $('#main-content');
+  const titles = {
+    ofertas: '🔥 Ofertas da Semana',
+    lancamentos: '🆕 Lançamentos',
+    top: '⭐ Mais Avaliados',
+  };
+  const t = titles[view];
+  if (!t) return loadHome();
+
+  document.title = `${t.replace(/^\S+\s/, '')} — Mastery Ebooks`;
+
+  main.innerHTML = `
+    <div class="container">
+      <h1 class="section-title"><span>${t}</span></h1>
+      <div class="section-divider"></div>
+      <p class="section-subtitle">Mostrando todos os ebooks desta seleção.</p>
+      <div class="ebooks-grid" id="view-grid">${skelHTML(8)}</div>
+      <p style="margin:30px 0;text-align:center"><a href="./" class="view-all-link">← Voltar para a página inicial</a></p>
+    </div>`;
+
+  try {
+    const books = await getAllBooks();
+    const { ofertas, lancamentos, top } = shelfLists(books);
+    const items = view === 'ofertas' ? ofertas : (view === 'top' ? top : lancamentos);
+    const grid = $('#view-grid');
+    grid.innerHTML = '';
+    if (!items.length) {
+      grid.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;padding:40px 0">Nenhum ebook nesta seleção no momento.</p>';
+    } else {
+      items.forEach(e => grid.appendChild(createCard(e)));
+    }
+  } catch (err) {
+    console.error('view:', err);
+    $('#view-grid').innerHTML = '<p style="color:#c00;text-align:center;grid-column:1/-1;padding:40px 0">Erro ao carregar.</p>';
+  }
+}
+
+// ============================================================
 // INIT
 // ============================================================
 async function init() {
   try {
     await Promise.all([loadSiteConfig(), loadMenu(), loadBanner()]);
 
-    const slug = new URLSearchParams(location.search).get('cat');
+    const params = new URLSearchParams(location.search);
+    const slug = params.get('cat');
+    const view = params.get('view');
     if (slug) await loadCategoryPage(slug);
-    else      await loadHome();
+    else if (view) await loadViewPage(view);
+    else await loadHome();
 
   } catch(e) {
     console.error('Init error:', String(e));

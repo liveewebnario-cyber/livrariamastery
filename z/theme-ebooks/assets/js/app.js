@@ -277,6 +277,8 @@ const App = (() => {
       }
     } catch (err) { console.error('featured:', err); }
 
+    await renderThematicShelves(mainEl);
+
     for (const cat of cats) {
       const section = document.createElement('section');
       section.className = 'category-section container';
@@ -327,6 +329,95 @@ const App = (() => {
     loadEbooksByCategory(slug, $('#cat-grid'));
   }
 
+  // ---- Fileiras temáticas (Ofertas / Lançamentos / Mais avaliados) ----
+  let allBooksCache = null;
+  async function getAllBooks() {
+    if (allBooksCache) return allBooksCache;
+    const { data } = await sb.from('ebooks').select('*')
+      .eq('active', true).order('created_at', { ascending: false }).limit(200);
+    allBooksCache = data || [];
+    return allBooksCache;
+  }
+
+  function shelfLists(books) {
+    const ofertas = books
+      .filter(e => e.old_price && e.new_price && e.old_price > e.new_price)
+      .sort((a, b) => discount(b.old_price, b.new_price) - discount(a.old_price, a.new_price));
+    const lancamentos = books.slice(0, 4);
+    const top = books.filter(e => Number(e.rating) > 0)
+      .sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+    return { ofertas, lancamentos, top };
+  }
+
+  async function renderThematicShelves(mainEl) {
+    try {
+      const books = await getAllBooks();
+      if (!books.length) return;
+      const { ofertas, lancamentos, top } = shelfLists(books);
+      const shelves = [
+        { key: 'ofertas', title: '🔥 Ofertas da Semana', items: ofertas },
+        { key: 'lancamentos', title: '🆕 Lançamentos', items: lancamentos },
+        { key: 'top', title: '⭐ Mais Avaliados', items: top },
+      ];
+      for (const s of shelves) {
+        if (!s.items.length) continue;
+        const sec = document.createElement('section');
+        sec.className = 'category-section container';
+        sec.innerHTML = `
+          <div class="category-header">
+            <div>
+              <h2 class="section-title">${s.title}</h2>
+              <div class="section-divider"></div>
+            </div>
+            <a href="${getBaseUrl()}?view=${s.key}" class="view-all-link">Ver lista completa →</a>
+          </div>
+          <div class="ebooks-grid"></div>`;
+        const grid = sec.querySelector('.ebooks-grid');
+        s.items.slice(0, 4).forEach(e => grid.appendChild(createCard(e)));
+        mainEl.appendChild(sec);
+      }
+    } catch (err) { console.error('shelves:', err); }
+  }
+
+  async function loadViewPage(view) {
+    const mainEl = $('#main-content');
+    if (!mainEl) return;
+    const titles = {
+      ofertas: '🔥 Ofertas da Semana',
+      lancamentos: '🆕 Lançamentos',
+      top: '⭐ Mais Avaliados',
+    };
+    if (!titles[view]) return loadHomePage();
+
+    document.title = `${titles[view].replace(/^\S+\s/, '')} — Mastery Ebooks`;
+
+    mainEl.innerHTML = `
+      <div class="container">
+        <h1 class="section-title"><span>${titles[view]}</span></h1>
+        <div class="section-divider"></div>
+        <p class="section-subtitle">Mostrando todos os ebooks desta seleção.</p>
+        <div class="ebooks-grid" id="view-grid">${skeletonHTML(8)}</div>
+        <p style="margin:30px 0;text-align:center"><a href="${getBaseUrl()}" class="view-all-link">← Voltar para a página inicial</a></p>
+      </div>
+    `;
+
+    try {
+      const books = await getAllBooks();
+      const { ofertas, lancamentos, top } = shelfLists(books);
+      const items = view === 'ofertas' ? ofertas : (view === 'top' ? top : lancamentos);
+      const grid = $('#view-grid');
+      grid.innerHTML = '';
+      if (!items.length) {
+        grid.innerHTML = '<p style="color:#999;text-align:center;grid-column:1/-1;padding:40px 0">Nenhum ebook nesta seleção no momento.</p>';
+      } else {
+        items.forEach(e => grid.appendChild(createCard(e)));
+      }
+    } catch (err) {
+      console.error('view:', err);
+      $('#view-grid').innerHTML = '<p style="color:#c00;text-align:center;grid-column:1/-1;padding:40px 0">Erro ao carregar.</p>';
+    }
+  }
+
   // ---- Skeleton loading ----
   function skeletonHTML(n) {
     return Array(n).fill(`
@@ -342,9 +433,8 @@ const App = (() => {
   }
 
   // ---- Helpers de URL ----
-  function getPageSlug() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('cat') || null;
+  function getPageParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
   }
   function getBaseUrl() {
     return window.location.pathname;
@@ -355,9 +445,12 @@ const App = (() => {
     try {
       await Promise.all([loadSiteConfig(), loadMenu(), loadBanner()]);
 
-      const slug = getPageSlug();
+      const slug = getPageParam('cat');
+      const view = getPageParam('view');
       if (slug) {
         await loadCategoryPage(slug);
+      } else if (view) {
+        await loadViewPage(view);
       } else {
         await loadHomePage();
       }
