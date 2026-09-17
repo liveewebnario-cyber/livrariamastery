@@ -4,15 +4,15 @@ import { supabase } from '../lib/supabase';
 
 const Navbar = ({ activeCategory, setActiveCategory }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [settings, setSettings] = useState({ logo_url: '' });
+    const [settings, setSettings] = useState({ logo_url: '', site_name: 'MASTERY EBOOKS' });
     const [categories, setCategories] = useState([
         'Todos', 'Saúde da Mulher', 'Saúde do Homem', 'Bem Estar', 'Sexualidade'
     ]);
 
     useEffect(() => {
         async function fetchSettings() {
-            const { data } = await supabase.from('site_settings').select('logo_url').single();
-            if (data) setSettings(data);
+            const { data } = await supabase.from('site_config').select('logo_url, site_name').single();
+            if (data) setSettings({ logo_url: data.logo_url || '', site_name: data.site_name || 'MASTERY EBOOKS' });
         }
         fetchSettings();
     }, []);
@@ -22,14 +22,13 @@ const Navbar = ({ activeCategory, setActiveCategory }) => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
                     {/* Logo */}
-                    <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => setActiveCategory('Todos')}>
-                        {settings.logo_url ? (
-                            <img className="h-10 w-auto" src={settings.logo_url} alt="Logo" />
-                        ) : (
-                            <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-                                MASTERY EBOOKS
-                            </span>
+                    <div className="flex-shrink-0 flex items-center gap-3 cursor-pointer" onClick={() => setActiveCategory('Todos')}>
+                        {settings.logo_url && (
+                            <img className="h-10 w-auto max-w-[140px] object-contain" src={settings.logo_url} alt="Logo" />
                         )}
+                        <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                            {settings.site_name}
+                        </span>
                     </div>
 
                     {/* Desktop Menu */}
