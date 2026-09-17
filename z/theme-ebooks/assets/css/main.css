@@ -445,6 +445,109 @@ img { max-width: 100%; display: block; }
   font-size: 1.05rem;
 }
 
+/* Novidade destacada */
+.featured-block {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  margin: 50px auto 60px;
+  max-width: 1050px;
+  padding: 36px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(41,98,255,0.08), rgba(156,39,176,0.07));
+  border: 1px solid rgba(41,98,255,0.2);
+  position: relative;
+  overflow: hidden;
+}
+.featured-block:after {
+  content: '';
+  position: absolute;
+  right: -60px;
+  top: -60px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(41,98,255,0.12), transparent 70%);
+  pointer-events: none;
+}
+.featured-cover { width: 260px; flex-shrink: 0; }
+.featured-cover img {
+  width: 100%;
+  max-height: 380px;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.15);
+}
+.featured-info { position: relative; z-index: 1; flex: 1; min-width: 0; }
+.featured-tag {
+  display: inline-block;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+.featured-title {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 8px;
+  line-height: 1.2;
+}
+.featured-desc {
+  color: var(--text-light);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+.featured-prices {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.featured-prices .old {
+  color: var(--text-light);
+  text-decoration: line-through;
+  font-size: 0.95rem;
+}
+.featured-prices .new {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+.featured-prices .disc {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+.featured-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.featured-badge {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+@media (max-width: 720px) {
+  .featured-block { flex-direction: column; text-align: center; padding: 26px 18px; }
+  .featured-cover { width: 180px; }
+  .featured-actions, .featured-prices { justify-content: center; }
+}
+
 /* ============================================================
    ESTADO VAZIO / LOADING
    ============================================================ */

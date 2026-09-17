@@ -245,6 +245,38 @@ const App = (() => {
       </div>
     `;
 
+    try {
+      const { data: featured } = await sb.from('ebooks').select('*').eq('featured', true).eq('active', true).limit(1);
+      if (featured?.[0]) {
+        const e = featured[0];
+        const d = discount(e.old_price, e.new_price);
+        const sec = document.createElement('section');
+        sec.className = 'container';
+        sec.innerHTML = `
+          <div class="featured-block">
+            <div class="featured-cover">
+              <img src="${e.cover_url || 'https://placehold.co/300x400/eee/999?text=Capa'}" alt="${e.title}" onerror="this.src='https://placehold.co/300x400/eee/999?text=Capa'"/>
+            </div>
+            <div class="featured-info">
+              <span class="featured-tag">⭐ Novidade destacada</span>
+              <h2 class="featured-title">${e.title}</h2>
+              <div class="featured-prices">
+                ${e.old_price ? `<span class="old">${fmt(e.old_price)}</span>` : ''}
+                <span class="new">${fmt(e.new_price)}</span>
+                ${d > 0 ? `<span class="disc">-${d}%</span>` : ''}
+              </div>
+              <p class="featured-desc">${(e.short_description || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</p>
+              <div class="featured-actions">
+                ${e.badge ? `<span class="featured-badge">🏆 ${e.badge}</span>` : ''}
+                <a href="${e.checkout_url || '#'}" target="_blank" rel="noopener" class="ebook-buy-btn">🛒 Comprar Agora</a>
+              </div>
+            </div>
+          </div>
+        `;
+        mainEl.appendChild(sec);
+      }
+    } catch (err) { console.error('featured:', err); }
+
     for (const cat of cats) {
       const section = document.createElement('section');
       section.className = 'category-section container';

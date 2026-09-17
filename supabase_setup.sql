@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS ebooks (
   rating NUMERIC(2,1) DEFAULT NULL,
   video_url TEXT DEFAULT '',
   audio_url TEXT DEFAULT '',
+  featured BOOLEAN DEFAULT FALSE,
   badge TEXT DEFAULT '',
   active BOOLEAN DEFAULT TRUE,
   featured BOOLEAN DEFAULT FALSE,

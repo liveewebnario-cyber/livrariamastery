@@ -356,7 +356,7 @@
     cursor: pointer; transition: border-color .2s; text-align: left;
   }
   .cfg-logo-preview:hover { border-color: var(--primary); }
-  .cfg-logo-preview img { height: 48px; width: auto; max-width: 160px; object-fit: contain; }
+  .cfg-logo-preview img { height: 62px; width: auto; max-width: 200px; object-fit: contain; }
   .cfg-logo-preview #cfg-logo-preview-name { font-size: 1.15rem; font-weight: 800; color: var(--text); }
   .badge-cat {
     background: var(--primary-glow);
@@ -592,6 +592,15 @@
           <label>Avaliação (estrelas 0 a 5)</label>
           <input type="number" id="eb-rating" placeholder="4.5" step="0.5" min="0" max="5" />
           <small style="color:var(--text-dim)">Deixe vazio ou 0 para não exibir estrelas no card.</small>
+        </div>
+
+        <!-- Destaque -->
+        <div class="field">
+          <label>Destaque da Home</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer">
+            <input type="checkbox" id="eb-featured" style="width:18px;height:18px" />
+            ⭐ Mostrar como "Novidade destacada" na página inicial
+          </label>
         </div>
 
         <!-- Link de pagamento -->
@@ -931,6 +940,13 @@
           <label>Avaliação (estrelas 0 a 5)</label>
           <input type="number" id="edit-rating" placeholder="4.5" step="0.5" min="0" max="5" />
         </div>
+        <div class="field">
+          <label>Destaque da Home</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer">
+            <input type="checkbox" id="edit-featured" style="width:18px;height:18px" />
+            ⭐ Mostrar como "Novidade destacada" na página inicial
+          </label>
+        </div>
         <div class="field form-full">
           <label>Mini Descrição</label>
           <textarea id="edit-desc" placeholder="Descrição curta do ebook..."></textarea>
@@ -1196,6 +1212,7 @@ async function addEbook() {
   const video_url = document.getElementById('eb-video').value.trim();
   const audio_url = document.getElementById('eb-audio').value.trim();
   const rating = parseFloat(document.getElementById('eb-rating').value) || null;
+  const featured = document.getElementById('eb-featured').checked;
   const short_description = document.getElementById('eb-desc').value.trim();
   const full_description = document.getElementById('eb-full-desc').value.trim();
   
@@ -1239,7 +1256,7 @@ async function addEbook() {
 
     const { error } = await sb.from('ebooks').insert({
       title, category_id, old_price, new_price, checkout_url, download_url, rating,
-      short_description, full_description, cover_url, video_url, audio_url, active: true, sort_order: 0
+      short_description, full_description, cover_url, video_url, audio_url, featured, active: true, sort_order: 0
     });
 
     if(error) throw error;
@@ -1258,6 +1275,7 @@ function clearEbookForm() {
     document.getElementById(id).value = '';
   });
   document.getElementById('eb-category').selectedIndex = 0;
+  document.getElementById('eb-featured').checked = false;
   document.getElementById('eb-cover-file').value = '';
   const prev = document.getElementById('cover-preview');
   prev.style.display = 'none'; prev.src = '';
@@ -1510,6 +1528,7 @@ function openEditModal(e) {
   document.getElementById('edit-old-price').value   = e.old_price || '';
   document.getElementById('edit-new-price').value   = e.new_price || '';
   document.getElementById('edit-rating').value      = e.rating || '';
+  document.getElementById('edit-featured').checked  = !!e.featured;
   document.getElementById('edit-desc').value        = e.short_description || '';
   document.getElementById('edit-full-desc').value   = e.full_description || '';
   document.getElementById('edit-active').value      = String(e.active !== false);
@@ -1558,6 +1577,7 @@ async function saveEdit() {
   const short_description = document.getElementById('edit-desc').value.trim();
   const full_description = document.getElementById('edit-full-desc').value.trim();
   const active       = document.getElementById('edit-active').value === 'true';
+  const featured     = document.getElementById('edit-featured').checked;
 
   if(!title) return toast('Preencha o título', 'error');
   if(!new_price) return toast('Preencha o preço', 'error');
@@ -1584,7 +1604,7 @@ async function saveEdit() {
       }
     }
 
-    const updates = { title, category_id, checkout_url, download_url, old_price, new_price, rating, short_description, full_description, video_url, audio_url, active };
+    const updates = { title, category_id, checkout_url, download_url, old_price, new_price, rating, short_description, full_description, video_url, audio_url, active, featured };
     if(cover_url) updates.cover_url = cover_url;
 
     const { error } = await sb.from('ebooks').update(updates).eq('id', id);

@@ -61,6 +61,53 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // 4. Fetch and Render Ebooks
+    function formatPrice(price) {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
+    }
+
+    async function renderFeatured() {
+        const container = document.getElementById('featured-section');
+        if (!container) return;
+        try {
+            const { data } = await supabaseClient.from('ebooks').select('*').eq('featured', true).eq('active', true).limit(1);
+            const e = data?.[0];
+            if (!e) return;
+
+            const savings = e.old_price && e.new_price && e.old_price > e.new_price ? e.old_price - e.new_price : 0;
+            const discount = savings > 0 ? Math.round((1 - e.new_price / e.old_price) * 100) : 0;
+            const rating = Math.min(5, Math.max(0, Number(e.rating) || 0));
+
+            container.innerHTML = `
+                <div class="relative overflow-hidden bg-gradient-to-br from-blue-900/40 via-gray-900 to-purple-900/30 rounded-3xl border border-blue-800/40 p-8 md:p-10 flex flex-col md:flex-row items-center gap-8">
+                    <div class="absolute -right-16 -top-16 w-72 h-72 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="w-40 md:w-56 flex-shrink-0 relative z-10">
+                        <img src="${e.cover_url || 'https://via.placeholder.com/300x400?text=Sem+Capa'}" alt="${e.title}" class="w-full aspect-[3/4] object-cover rounded-2xl shadow-2xl shadow-gray-950/50">
+                    </div>
+                    <div class="flex-1 relative z-10 text-center md:text-left">
+                        <span class="inline-block bg-blue-600 text-white text-[0.7rem] font-bold tracking-widest uppercase px-3 py-1 rounded-full mb-4">⭐ Novidade destacada</span>
+                        <h3 class="text-2xl md:text-3xl font-extrabold text-white mb-2">${e.title}</h3>
+                        ${rating > 0 ? `
+                        <div class="flex items-center justify-center md:justify-start gap-0.5 mb-3 text-yellow-400">
+                            ${[1, 2, 3, 4, 5].map(i => `<i data-lucide="star" class="${i <= Math.round(rating) ? 'fill-current text-yellow-400' : 'text-gray-600'}"></i>`).join('')}
+                        </div>` : ''}
+                        ${e.badge ? `<span class="inline-flex items-center gap-1.5 bg-gray-800/80 border border-gray-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-3">🏆 ${e.badge}</span>` : ''}
+                        ${e.short_description ? `<p class="text-gray-300 leading-relaxed mb-5 max-w-xl mx-auto md:mx-0">${e.short_description}</p>` : ''}
+                        <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
+                            ${e.old_price ? `<span class="text-gray-400 line-through">${formatPrice(e.old_price)}</span>` : ''}
+                            <span class="text-3xl font-extrabold text-emerald-400">${formatPrice(e.new_price)}</span>
+                            ${discount > 0 ? `<span class="bg-emerald-500/20 text-emerald-300 font-bold text-sm px-3 py-1 rounded-lg">-${discount}%</span>` : ''}
+                        </div>
+                        <a href="${e.checkout_url || '#'}" target="_blank" rel="noopener" class="inline-block bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg shadow-blue-900/30">🛒 Comprar Agora</a>
+                    </div>
+                </div>
+            `;
+            container.classList.remove('hidden');
+            lucide.createIcons();
+        } catch (err) {
+            console.error('featured:', err);
+        }
+    }
+
     async function fetchEbooks() {
         const grid = document.getElementById('ebooks-grid');
         const noResults = document.getElementById('no-results');
@@ -325,6 +372,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialize
     fetchSettings();
+    renderFeatured();
     fetchEbooks();
     lucide.createIcons();
 });

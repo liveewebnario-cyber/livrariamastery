@@ -59,7 +59,7 @@ img { max-width: 100%; display: block; }
   height: 70px; position: relative;
 }
 .site-logo { display: flex; align-items: center; gap: 12px; }
-.site-logo img { height: 50px; width: auto; object-fit: contain; }
+.site-logo img { height: 60px; width: auto; object-fit: contain; }
 .site-logo-text { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
 
 .nav-menu { display: flex; align-items: center; gap: 4px; list-style: none; }
@@ -225,6 +225,45 @@ img { max-width: 100%; display: block; }
 .home-hero h1 { font-size: clamp(1.8rem,4vw,2.8rem); font-weight: 800; color: var(--text); margin-bottom: 12px; line-height: 1.2; }
 .home-hero h1 span { color: var(--primary); }
 .home-hero p { color: var(--text-light); font-size: 1.05rem; }
+
+/* NOVIDADE DESTACADA */
+.featured-block {
+  display: flex; gap: 40px; align-items: center; margin: 50px auto 60px;
+  max-width: 1050px; padding: 36px; border-radius: 20px;
+  background: linear-gradient(135deg, rgba(25,118,210,.12), rgba(156,39,176,.10));
+  border: 1px solid rgba(25,118,210,.25); position: relative; overflow: hidden;
+}
+.featured-block:after {
+  content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px;
+  background: radial-gradient(circle, rgba(25,118,210,.18), transparent 70%); pointer-events: none;
+}
+.featured-cover { width: 280px; flex-shrink: 0; }
+.featured-cover img {
+  width: 100%; max-height: 400px; object-fit: contain; border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.4);
+}
+.featured-info { position: relative; z-index: 1; flex: 1; min-width: 0; }
+.featured-tag {
+  display: inline-block; background: var(--primary); color: #fff; font-size: .72rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; margin-bottom: 14px;
+}
+.featured-title { font-size: clamp(1.4rem,3vw,2rem); font-weight: 800; color: var(--text); margin: 0 0 8px; line-height: 1.2; }
+.featured-desc { color: var(--text-light); font-size: 1rem; line-height: 1.6; margin-bottom: 18px; }
+.featured-prices { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.featured-prices .old { color: var(--text-light); text-decoration: line-through; font-size: .95rem; }
+.featured-prices .new { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
+.featured-prices .disc { background: var(--accent); color: #000; font-weight: 700; padding: 3px 10px; border-radius: 6px; font-size: .85rem; }
+.featured-badges { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.featured-badges span {
+  font-size: .72rem; font-weight: 700; color: var(--text); background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 4px 11px; letter-spacing: .02em;
+}
+.featured-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+@media (max-width: 720px) {
+  .featured-block { flex-direction: column; text-align: center; padding: 26px 18px; }
+  .featured-cover { width: 170px; }
+  .featured-actions, .featured-prices, .featured-badges { justify-content: center; }
+}
 
 /* CATEGORIA SECTION */
 .category-section { margin-bottom: 60px; }
@@ -679,6 +718,45 @@ async function loadHome() {
       <h1>Os melhores ebooks para sua <span>saúde e bem-estar</span></h1>
       <p>Conteúdo especializado para cuidar de você em todas as fases da vida</p>
     </div>`;
+
+  try {
+    const { data: featured } = await sb.from('ebooks')
+      .select('*').eq('featured', true).eq('active', true).limit(1);
+    if (featured?.[0]) {
+      const e = featured[0];
+      const d = disc(e.old_price, e.new_price);
+      const sec = document.createElement('section');
+      sec.className = 'container';
+      sec.innerHTML = `
+        <div class="featured-block">
+          <div class="featured-cover">
+            <img src="${e.cover_url || 'https://placehold.co/300x400/eee/999?text=Capa'}" alt="${e.title}" onerror="this.src='https://placehold.co/300x400/eee/999?text=Capa'"/>
+          </div>
+          <div class="featured-info">
+            <span class="featured-tag">⭐ Novidade destacada</span>
+            <h2 class="featured-title">${e.title}</h2>
+            ${e.rating > 0 ? `<div class="ebook-stars">${starsHtml(e.rating)}</div>` : ''}
+            <div class="featured-badges">
+              ${e.badge ? `<span>🏆 ${e.badge}</span>` : ''}
+              ${e.full_description ? `<span>📖 Descrição completa</span>` : ''}
+            </div>
+            <p class="featured-desc">${(e.short_description || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</p>
+            <div class="featured-prices">
+              ${e.old_price ? `<span class="old">${fmt(e.old_price)}</span>` : ''}
+              <span class="new">${fmt(e.new_price)}</span>
+              ${d > 0 ? `<span class="disc">-${d}%</span>` : ''}
+            </div>
+            <div class="featured-actions">
+              <button class="ebook-details-btn" onclick="openDetails(${JSON.stringify(e).replace(/"/g,'&quot;')})">💬 Saiba mais</button>
+              <a href="${e.checkout_url || '#'}" target="_blank" rel="noopener" class="ebook-buy-btn">🛒 Comprar Agora</a>
+            </div>
+          </div>
+        </div>`;
+      main.appendChild(sec);
+    }
+  } catch (err) {
+    console.error('featured:', err);
+  }
 
   for (const cat of cats) {
     const sec = document.createElement('section');

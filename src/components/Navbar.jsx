@@ -24,7 +24,7 @@ const Navbar = ({ activeCategory, setActiveCategory }) => {
                     {/* Logo */}
                     <div className="flex-shrink-0 flex items-center gap-3 cursor-pointer" onClick={() => setActiveCategory('Todos')}>
                         {settings.logo_url && (
-                            <img className="h-10 w-auto max-w-[140px] object-contain" src={settings.logo_url} alt="Logo" />
+                            <img className="h-14 w-auto max-w-[180px] object-contain" src={settings.logo_url} alt="Logo" />
                         )}
                         <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
                             {settings.site_name}
