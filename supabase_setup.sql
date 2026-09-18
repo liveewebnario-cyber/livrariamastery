@@ -166,6 +166,75 @@ AFTER INSERT ON newsletters
 FOR EACH ROW EXECUTE FUNCTION notify_newsletter_welcome();
 
 -- ============================================================
+-- TABELAS: templates e campanhas de e-mail
+-- ============================================================
+CREATE TABLE IF NOT EXISTS email_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  body TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS newsletter_campaigns (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT,
+  template_id UUID REFERENCES email_templates(id) ON DELETE SET NULL,
+  subject TEXT,
+  status TEXT NOT NULL DEFAULT 'draft',
+  total INTEGER NOT NULL DEFAULT 0,
+  sent INTEGER NOT NULL DEFAULT 0,
+  failed INTEGER NOT NULL DEFAULT 0,
+  scheduled_for TIMESTAMP WITH TIME ZONE,
+  started_at TIMESTAMP WITH TIME ZONE,
+  finished_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS newsletter_campaign_recipients (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id UUID NOT NULL REFERENCES newsletter_campaigns(id) ON DELETE CASCADE,
+  newsletter_id UUID REFERENCES newsletters(id) ON DELETE SET NULL,
+  email TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  error TEXT,
+  sent_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS ncr_campaign_idx ON newsletter_campaign_recipients (campaign_id, status);
+CREATE INDEX IF NOT EXISTS ncr_sent_idx ON newsletter_campaign_recipients (sent_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS ncr_campaign_email_idx ON newsletter_campaign_recipients (campaign_id, email);
+CREATE INDEX IF NOT EXISTS campaigns_status_idx ON newsletter_campaigns (status, scheduled_for);
+
+-- ============================================================
+-- CRON: processa campanhas agendadas/em andamento a cada 2 minutos
+-- Dispara a Edge Function "send-newsletter" (action=auto) via pg_net
+-- ============================================================
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+DO $$
+BEGIN
+  PERFORM cron.unschedule('send-newsletter-auto');
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+SELECT cron.schedule(
+  'send-newsletter-auto',
+  '*/2 * * * *',
+  $job$
+  select net.http_post(
+    url := 'https://cghrmeckjzjzgpgcgiot.supabase.co/functions/v1/send-newsletter',
+    headers := jsonb_build_object('Content-Type', 'application/json'),
+    body := jsonb_build_object('action', 'auto'),
+    timeout_milliseconds := 15000
+  );
+  $job$
+);
+
+-- ============================================================
 -- TABELA: cakto_orders (eventos de webhook da Cakto)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS cakto_orders (

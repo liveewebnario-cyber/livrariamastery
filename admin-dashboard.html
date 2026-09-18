@@ -497,6 +497,12 @@
     <button class="nav-item" onclick="showPanel('pedidos')">
       <span class="icon">🧾</span> Pedidos
     </button>
+    <button class="nav-item" onclick="showPanel('templates')">
+      <span class="icon">📝</span> Templates
+    </button>
+    <button class="nav-item" onclick="showPanel('campanhas')">
+      <span class="icon">📣</span> Campanhas
+    </button>
     <button class="nav-item" onclick="showPanel('config')">
       <span class="icon">⚙️</span> Configurações
     </button>
@@ -830,6 +836,7 @@
           <div class="card-subtitle">E-mails captados pela faixa "Quero receber novidades" no site</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="loadNewsletters()">↻ Atualizar</button>
+        <button class="btn btn-ghost btn-sm" onclick="resendAllPending()">✉ Reenviar pendentes</button>
         <button class="btn btn-primary btn-sm" onclick="exportNewslettersCsv()">⬇ Exportar CSV</button>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin:0 0 18px">
@@ -870,6 +877,110 @@
         <table>
           <thead><tr><th>Data</th><th>Evento</th><th>Cliente</th><th>Produto</th><th>Valor</th><th>E-mail</th></tr></thead>
           <tbody id="orders-tbody"><tr><td colspan="6"><div class="empty">⏳ Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL: TEMPLATES -->
+  <div class="panel" id="panel-templates">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">📝 Templates de E-mail</div>
+          <div class="card-subtitle">Modelos usados nas campanhas. Use HTML simples; {{email}} é substituído pelo endereço do inscrito.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadTemplates()">↻ Atualizar</button>
+        <button class="btn btn-primary btn-sm" onclick="newTemplate()">＋ Novo template</button>
+      </div>
+
+      <div id="tpl-form" style="display:none;background:var(--surface2);border-radius:10px;padding:16px;margin:0 0 18px">
+        <input type="hidden" id="tpl-id" />
+        <div class="form-grid">
+          <div class="field">
+            <label>Nome *</label>
+            <input type="text" id="tpl-name" placeholder="Ex.: Promoção de Natal" />
+          </div>
+          <div class="field">
+            <label>Assunto *</label>
+            <input type="text" id="tpl-subject" placeholder="Assunto exibido no e-mail" />
+          </div>
+          <div class="field form-full">
+            <label>Conteúdo (HTML)</label>
+            <textarea id="tpl-body" rows="9" style="font-family:var(--mono);font-size:.85rem" placeholder="<p>Olá!</p><p>Confira nossas novidades...</p>"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn btn-primary btn-sm" onclick="saveTemplate()">💾 Salvar</button>
+          <button class="btn btn-ghost btn-sm" onclick="cancelTemplate()">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>Assunto</th><th>Ações</th></tr></thead>
+          <tbody id="templates-tbody"><tr><td colspan="3"><div class="empty">⏳ Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL: CAMPANHAS -->
+  <div class="panel" id="panel-campanhas">
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
+        <div>
+          <div class="card-title">📣 Nova campanha</div>
+          <div class="card-subtitle">Escolha um template e para quem enviar. O envio é feito em lotes e respeita o limite diário do Resend.</div>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Template *</label>
+          <select id="camp-template"><option value="">Selecione...</option></select>
+        </div>
+        <div class="field">
+          <label>Agendar para (opcional)</label>
+          <input type="datetime-local" id="camp-scheduled" />
+        </div>
+        <div class="field form-full">
+          <label>Destinatários</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer">
+            <input type="radio" name="camp-mode" value="all" checked onchange="toggleCampRecipients()" /> Todos os inscritos
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer">
+            <input type="radio" name="camp-mode" value="selected" onchange="toggleCampRecipients()" /> Selecionados
+          </label>
+        </div>
+        <div class="field form-full" id="camp-recipients" style="display:none">
+          <label>Selecione os inscritos</label>
+          <input type="text" id="camp-search" placeholder="Buscar e-mail..." oninput="renderCampRecipients()" />
+          <div style="display:flex;gap:12px;font-size:.85rem;margin:2px 0 6px">
+            <a href="#" onclick="campSelectAll(true);return false">Selecionar todos</a>
+            <a href="#" onclick="campSelectAll(false);return false">Limpar seleção</a>
+            <span id="camp-sel-count" style="color:var(--text-muted)"></span>
+          </div>
+          <div id="camp-recipients-list" style="max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:8px"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;align-items:center">
+        <button class="btn btn-primary btn-sm" onclick="startCampaign()">🚀 Criar e enviar</button>
+        <span id="camp-status-msg" style="font-size:.85rem;color:var(--text-muted)"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">📨 Campanhas</div>
+          <div class="card-subtitle">Histórico e progresso de envio</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadCampaigns()">↻ Atualizar</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Criada</th><th>Nome</th><th>Status</th><th>Progresso</th><th>Agendada</th><th>Ações</th></tr></thead>
+          <tbody id="campaigns-tbody"><tr><td colspan="6"><div class="empty">⏳ Carregando...</div></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1148,12 +1259,14 @@ function showPanel(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
   event.currentTarget.classList.add('active');
-  const titles = { ebooks:'Ebooks', banners:'Banners', categorias:'Categorias', newsletters:'Newsletter', pedidos:'Pedidos', config:'Configurações' };
-  const subs = { ebooks:'Adicione e gerencie seus ebooks', banners:'Gerencie o slider rotativo', categorias:'Gerencie as categorias do menu', newsletters:'E-mails captados no site', pedidos:'Vendas e eventos recebidos da Cakto', config:'Configurações globais do site' };
+  const titles = { ebooks:'Ebooks', banners:'Banners', categorias:'Categorias', newsletters:'Newsletter', pedidos:'Pedidos', templates:'Templates', campanhas:'Campanhas', config:'Configurações' };
+  const subs = { ebooks:'Adicione e gerencie seus ebooks', banners:'Gerencie o slider rotativo', categorias:'Gerencie as categorias do menu', newsletters:'E-mails captados no site', pedidos:'Vendas e eventos recebidos da Cakto', templates:'Modelos de e-mail para as campanhas', campanhas:'Envie e-mails para a sua lista', config:'Configurações globais do site' };
   document.getElementById('panel-title').textContent = titles[name];
   document.getElementById('panel-sub').textContent = subs[name];
   if (name === 'newsletters') loadNewsletters();
   if (name === 'pedidos') loadOrders();
+  if (name === 'templates') loadTemplates();
+  if (name === 'campanhas') { loadTemplates(); loadCampRecipients(); loadCampaigns(); }
 }
 
 // ── TOAST ──
@@ -1216,7 +1329,7 @@ async function loadNewsletters() {
       <td class="td-title">${n.email}</td>
       <td style="color:var(--text-muted);font-size:0.82rem">${n.created_at ? new Date(n.created_at).toLocaleString('pt-BR') : '—'}</td>
       <td style="font-size:0.82rem">${n.welcome_sent ? '✅ enviado' : '⏳ pendente'}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="deleteNewsletter('${n.id}')">🗑</button></td>
+      <td style="white-space:nowrap">${n.welcome_sent ? '' : `<button class="btn btn-ghost btn-sm" onclick="resendWelcome('${n.id}', this)">✉ Reenviar</button> `}<button class="btn btn-danger btn-sm" onclick="deleteNewsletter('${n.id}')">🗑</button></td>
     </tr>
   `).join('');
 }
@@ -1283,6 +1396,222 @@ function exportOrdersCsv() {
   a.click();
   URL.revokeObjectURL(a.href);
   toast('CSV exportado! ⬇');
+}
+
+// ── HELPERS DE E-MAIL ──
+function escHtml(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+async function callFn(name, body) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    return await r.json().catch(() => ({}));
+  } catch (e) { return { error: e.message }; }
+}
+
+async function resendWelcome(id, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  const res = await callFn('newsletter-welcome', { id });
+  if (res.ok && res.sent) toast('Boas-vindas reenviado! ✉');
+  else if (res.ok && res.skipped) toast('Já enviado ou endereço de teste');
+  else toast(res.error || 'Falha ao reenviar', 'error');
+  loadNewsletters();
+}
+
+async function resendAllPending() {
+  const pending = newsletterList.filter(n => !n.welcome_sent);
+  if (!pending.length) return toast('Nenhum pendente', 'error');
+  if (!confirm(`Reenviar boas-vindas para ${pending.length} inscrito(s) pendente(s)?`)) return;
+  toast('Reenviando...');
+  let ok = 0;
+  for (const n of pending) { const res = await callFn('newsletter-welcome', { id: n.id }); if (res.ok && res.sent) ok++; }
+  toast(`${ok} de ${pending.length} reenviados`);
+  loadNewsletters();
+}
+
+// ── TEMPLATES ──
+let templatesList = [];
+async function loadTemplates() {
+  const { data, error } = await sb.from('email_templates').select('*').order('created_at', { ascending: false });
+  if (error) return toast('Erro ao carregar templates', 'error');
+  templatesList = data || [];
+  const tbody = document.getElementById('templates-tbody');
+  if (!templatesList.length) { tbody.innerHTML = '<tr><td colspan="3"><div class="empty">📭 Nenhum template ainda</div></td></tr>'; }
+  else {
+    tbody.innerHTML = templatesList.map(t => `
+      <tr>
+        <td class="td-title">${escHtml(t.name)}</td>
+        <td style="color:var(--text-muted);font-size:.85rem">${escHtml(t.subject)}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-ghost btn-sm" onclick="editTemplate('${t.id}')">✏️ Editar</button>
+          <button class="btn btn-ghost btn-sm" onclick="testTemplate('${t.id}')">✉️ Teste</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTemplate('${t.id}')">🗑</button>
+        </td>
+      </tr>`).join('');
+  }
+  loadCampTemplates();
+}
+
+function newTemplate() {
+  document.getElementById('tpl-id').value = '';
+  document.getElementById('tpl-name').value = '';
+  document.getElementById('tpl-subject').value = '';
+  document.getElementById('tpl-body').value = '<p>Olá!</p>\n<p></p>';
+  document.getElementById('tpl-form').style.display = 'block';
+  document.getElementById('tpl-name').focus();
+}
+function cancelTemplate() { document.getElementById('tpl-form').style.display = 'none'; }
+function editTemplate(id) {
+  const t = templatesList.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('tpl-id').value = t.id;
+  document.getElementById('tpl-name').value = t.name || '';
+  document.getElementById('tpl-subject').value = t.subject || '';
+  document.getElementById('tpl-body').value = t.body || '';
+  document.getElementById('tpl-form').style.display = 'block';
+}
+async function saveTemplate() {
+  const id = document.getElementById('tpl-id').value;
+  const name = document.getElementById('tpl-name').value.trim();
+  const subject = document.getElementById('tpl-subject').value.trim();
+  const body = document.getElementById('tpl-body').value;
+  if (!name || !subject) return toast('Preencha nome e assunto', 'error');
+  const row = { name, subject, body, updated_at: new Date().toISOString() };
+  const { error } = id ? await sb.from('email_templates').update(row).eq('id', id) : await sb.from('email_templates').insert(row);
+  if (error) return toast('Erro: ' + error.message, 'error');
+  toast(id ? 'Template atualizado' : 'Template criado');
+  cancelTemplate();
+  loadTemplates();
+}
+async function deleteTemplate(id) {
+  if (!confirm('Excluir este template?')) return;
+  const { error } = await sb.from('email_templates').delete().eq('id', id);
+  if (error) return toast('Erro: ' + error.message, 'error');
+  toast('Template excluído');
+  loadTemplates();
+}
+async function testTemplate(id) {
+  const to = prompt('Enviar teste para qual e-mail?', '');
+  if (!to) return;
+  toast('Enviando teste...');
+  const res = await callFn('send-newsletter', { action: 'test', template_id: id, to });
+  toast(res.error ? res.error : 'E-mail de teste enviado ✉', res.error ? 'error' : 'success');
+}
+
+// ── CAMPANHAS ──
+let campaignsList = [];
+let campRecipients = [];
+let campSelected = new Set();
+
+const CAMP_STATUS = { draft:'Rascunho', scheduled:'⏳ Agendada', sending:'📤 Enviando', sent:'✅ Enviada', failed:'⚠️ Falhou', canceled:'Cancelada' };
+
+function loadCampTemplates() {
+  const sel = document.getElementById('camp-template');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Selecione...</option>' + templatesList.map(t => `<option value="${t.id}">${escHtml(t.name)}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+async function loadCampRecipients() {
+  const { data } = await sb.from('newsletters').select('id,email').order('email');
+  campRecipients = data || [];
+  renderCampRecipients();
+}
+function campFiltered() {
+  const q = (document.getElementById('camp-search').value || '').toLowerCase().trim();
+  return campRecipients.filter(r => !q || String(r.email).toLowerCase().includes(q));
+}
+function renderCampRecipients() {
+  const list = document.getElementById('camp-recipients-list');
+  if (!list) return;
+  const filtered = campFiltered();
+  if (!filtered.length) { list.innerHTML = '<div class="empty">📭 Nenhum inscrito</div>'; }
+  else {
+    list.innerHTML = filtered.map(r => `
+      <label style="display:flex;align-items:center;gap:8px;padding:4px 6px;font-size:.85rem;cursor:pointer">
+        <input type="checkbox" ${campSelected.has(r.id) ? 'checked' : ''} onchange="toggleCampRecipient('${r.id}', this.checked)" />
+        ${escHtml(r.email)}
+      </label>`).join('');
+  }
+  const cnt = document.getElementById('camp-sel-count');
+  if (cnt) cnt.textContent = `${campSelected.size} selecionado(s)`;
+}
+function toggleCampRecipient(id, on) { if (on) campSelected.add(id); else campSelected.delete(id); renderCampRecipients(); }
+function campSelectAll(on) {
+  if (on) campFiltered().forEach(r => campSelected.add(r.id));
+  else campSelected.clear();
+  renderCampRecipients();
+}
+function toggleCampRecipients() {
+  const mode = document.querySelector('input[name="camp-mode"]:checked')?.value;
+  const box = document.getElementById('camp-recipients');
+  if (box) box.style.display = mode === 'selected' ? 'flex' : 'none';
+}
+
+async function loadCampaigns() {
+  const { data, error } = await sb.from('newsletter_campaigns').select('*').order('created_at', { ascending: false }).limit(100);
+  if (error) return toast('Erro ao carregar campanhas', 'error');
+  campaignsList = data || [];
+  const tbody = document.getElementById('campaigns-tbody');
+  if (!campaignsList.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty">📭 Nenhuma campanha ainda</div></td></tr>'; return; }
+  tbody.innerHTML = campaignsList.map(c => {
+    const pct = c.total ? Math.round((c.sent / c.total) * 100) : 0;
+    const prog = `${c.sent}/${c.total}${c.failed ? ` · ${c.failed} falha(s)` : ''}`;
+    const actions = (c.status === 'sending' || c.status === 'scheduled')
+      ? `<button class="btn btn-ghost btn-sm" onclick="processCampaign('${c.id}')">▶ Processar</button>` : '';
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:.82rem">${c.created_at ? new Date(c.created_at).toLocaleString('pt-BR') : '—'}</td>
+      <td class="td-title">${escHtml(c.name || '—')}
+        <div style="height:6px;background:var(--surface2);border-radius:3px;margin-top:6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:#6c3483"></div></div>
+      </td>
+      <td>${CAMP_STATUS[c.status] || c.status}</td>
+      <td style="font-size:.82rem">${prog}</td>
+      <td style="color:var(--text-muted);font-size:.82rem">${c.scheduled_for ? new Date(c.scheduled_for).toLocaleString('pt-BR') : '—'}</td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function processCampaign(id) {
+  toast('Processando lote...');
+  const res = await callFn('send-newsletter', { action: 'process', campaign_id: id });
+  if (res.error) return toast(res.error, 'error');
+  toast(res.remaining ? `Restam ${res.remaining} nesta campanha` : 'Campanha concluída');
+  loadCampaigns();
+}
+
+async function startCampaign() {
+  const template_id = document.getElementById('camp-template').value;
+  if (!template_id) return toast('Selecione um template', 'error');
+  const mode = document.querySelector('input[name="camp-mode"]:checked')?.value || 'all';
+  const ids = [...campSelected];
+  if (mode === 'selected' && !ids.length) return toast('Selecione ao menos um inscrito', 'error');
+  const sch = document.getElementById('camp-scheduled').value;
+  const scheduled_for = sch ? new Date(sch).toISOString() : null;
+  const msg = document.getElementById('camp-status-msg');
+  const total = mode === 'all' ? campRecipients.length : ids.length;
+  if (!total) return toast('Nenhum destinatário', 'error');
+  const aviso = total > 90 ? `\n\nO envio respeita o limite de ~90/dia do Resend e continua automaticamente nos próximos dias.` : '';
+  if (!confirm(`Enviar para ${total} inscrito(s)${scheduled_for ? ' (agendado)' : ' agora'}?${aviso}`)) return;
+
+  msg.textContent = 'Criando campanha...';
+  const res = await callFn('send-newsletter', { action: 'start', template_id, mode, ids, scheduled_for });
+  if (res.error) { msg.textContent = ''; return toast(res.error, 'error'); }
+  if (res.scheduled) { msg.textContent = ''; toast('Campanha agendada ✅'); return loadCampaigns(); }
+
+  let remaining = res.remaining ?? 0;
+  let guard = 0;
+  msg.textContent = `Enviados: ${res.sent ?? 0} · Restam: ${remaining}`;
+  while (remaining > 0 && !res.throttled && guard < 500) {
+    guard++;
+    res = await callFn('send-newsletter', { action: 'process', campaign_id: res.campaign_id });
+    remaining = res.remaining ?? 0;
+    msg.textContent = `Enviando... restam ${remaining}`;
+    if (res.throttled) break;
+  }
+  msg.textContent = res.throttled ? 'Limite diário atingido — continua automaticamente.' : 'Envio concluído ✅';
+  toast(res.throttled ? 'Limite diário atingido' : 'Campanha enviada ✅', res.throttled ? 'error' : 'success');
+  loadCampaigns();
 }
 
 // ── CATEGORIES ──
