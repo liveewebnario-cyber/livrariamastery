@@ -97,15 +97,48 @@ CREATE TABLE IF NOT EXISTS ebooks (
   checkout_url TEXT DEFAULT '#',
   download_url TEXT DEFAULT '',
   rating NUMERIC(2,1) DEFAULT NULL,
+  rating_count INTEGER DEFAULT 0,
   video_url TEXT DEFAULT '',
   audio_url TEXT DEFAULT '',
   featured BOOLEAN DEFAULT FALSE,
   badge TEXT DEFAULT '',
   active BOOLEAN DEFAULT TRUE,
-  featured BOOLEAN DEFAULT FALSE,
   sort_order INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Cadastro de newsletter
+CREATE TABLE IF NOT EXISTS newsletters (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================================
+-- TABELA: cakto_orders (eventos de webhook da Cakto)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS cakto_orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  dedup_key TEXT NOT NULL,
+  cakto_order_id TEXT,
+  event TEXT NOT NULL,
+  status TEXT,
+  customer_name TEXT,
+  customer_email TEXT,
+  customer_phone TEXT,
+  product_name TEXT,
+  amount NUMERIC,
+  payment_method TEXT,
+  checkout_url TEXT,
+  email_sent BOOLEAN DEFAULT FALSE,
+  email_error TEXT,
+  raw JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS cakto_orders_dedup_idx ON cakto_orders (dedup_key);
+CREATE INDEX IF NOT EXISTS cakto_orders_email_idx ON cakto_orders (customer_email);
+CREATE INDEX IF NOT EXISTS cakto_orders_created_idx ON cakto_orders (created_at DESC);
 
 -- Inserir ebooks de exemplo
 DO $$

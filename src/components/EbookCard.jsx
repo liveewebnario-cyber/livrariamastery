@@ -143,6 +143,9 @@ const EbookCard = ({ ebook }) => {
                                     className={i <= Math.round(rating) ? 'text-yellow-400' : 'text-slate-600'}
                                 />
                             ))}
+                            <span className="ml-1.5 text-xs font-semibold text-slate-300">
+                                {rating}{ebook.rating_count > 0 ? ` (${ebook.rating_count})` : ''}
+                            </span>
                         </div>
                     )}
 
@@ -233,6 +236,9 @@ const EbookCard = ({ ebook }) => {
                                                 />
                                             ))}
                                             <span className="ml-2 text-sm text-slate-400">{rating.toLocaleString('pt-BR')}</span>
+                                            {ebook.rating_count > 0 && (
+                                                <span className="ml-1 text-sm text-slate-400">({ebook.rating_count})</span>
+                                            )}
                                         </div>
                                     )}
 

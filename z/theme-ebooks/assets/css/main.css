@@ -309,6 +309,49 @@ img { max-width: 100%; display: block; }
   gap: 8px;
   flex-wrap: wrap;
 }
+.ebook-stars { color: #f5b301; font-size: 0.78rem; line-height: 1.2; }
+.ebook-stars .star-off { color: #ddd; }
+.ebook-stars-count { margin-left: 6px; color: var(--text-light); font-weight: 600; font-size: 0.72rem; }
+
+/* Newsletter */
+.newsletter-band { padding: 50px 20px; }
+.newsletter-box {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 40px 30px;
+  background: linear-gradient(135deg, rgba(41,98,255,0.08), rgba(156,39,176,0.07));
+  border: 1px solid rgba(41,98,255,0.2);
+  border-radius: 20px;
+}
+.newsletter-box h2 { font-size: clamp(1.3rem, 3vw, 1.8rem); font-weight: 800; color: var(--text); margin-bottom: 8px; }
+.newsletter-box p { color: var(--text-light); margin-bottom: 20px; }
+.newsletter-form { display: flex; gap: 10px; max-width: 480px; margin: 0 auto; flex-wrap: wrap; }
+.newsletter-form input {
+  flex: 1;
+  min-width: 220px;
+  padding: 13px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+.newsletter-form input:focus { outline: none; border-color: var(--primary); }
+.newsletter-form button {
+  padding: 13px 20px;
+  border-radius: 10px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.newsletter-form button:hover { filter: brightness(1.1); }
+.newsletter-msg { margin-top: 14px; font-weight: 600; font-size: 0.9rem; min-height: 1em; }
+.newsletter-msg.ok { color: #22a06b; }
+.newsletter-msg.err { color: #d33; }
 .ebook-old-price {
   font-size: 0.78rem;
   color: var(--text-light);

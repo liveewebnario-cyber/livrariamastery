@@ -158,6 +158,12 @@ const App = (() => {
       <img class="ebook-cover" src="${ebook.cover_url || 'https://placehold.co/300x400/eee/999?text=Capa'}" alt="${ebook.title}" loading="lazy" />
       <div class="ebook-info">
         <h3 class="ebook-title">${ebook.title}</h3>
+        ${ebook.rating > 0 ? `
+          <div class="ebook-stars">
+            ${[...Array(Math.min(5, Math.max(0, Math.round(Number(ebook.rating) || 0))))].map(() => '★').join('')}
+            ${[...Array(5 - Math.min(5, Math.max(0, Math.round(Number(ebook.rating) || 0))))].map(() => '<span class="star-off">★</span>').join('')}
+            <span class="ebook-stars-count">${ebook.rating}${ebook.rating_count > 0 ? ` (${ebook.rating_count})` : ''}</span>
+          </div>` : ''}
         <div class="ebook-prices">
           ${ebook.old_price ? `<span class="ebook-old-price">${fmt(ebook.old_price)}</span>` : ''}
           <span class="ebook-new-price">${fmt(ebook.new_price)}</span>
@@ -440,9 +446,48 @@ const App = (() => {
     return window.location.pathname;
   }
 
+  // ---- Newsletter ----
+  function initNewsletter() {
+    const form = document.getElementById('newsletter-form');
+    if (!form) return;
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const email = document.getElementById('newsletter-email').value.trim().toLowerCase();
+      const msg = document.getElementById('newsletter-msg');
+      const btn = document.getElementById('newsletter-btn');
+      if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        msg.textContent = 'Digite um e-mail válido.';
+        msg.className = 'newsletter-msg err';
+        return;
+      }
+      btn.disabled = true;
+      const original = btn.textContent;
+      btn.textContent = 'Cadastrando...';
+      try {
+        const { error } = await sb.from('newsletters').insert({ email });
+        if (error) {
+          if (error.code === '23505') { msg.textContent = 'Este e-mail já está cadastrado. 😉'; msg.className = 'newsletter-msg ok'; }
+          else throw error;
+        } else {
+          msg.textContent = '✅ E-mail cadastrado com sucesso!';
+          msg.className = 'newsletter-msg ok';
+          document.getElementById('newsletter-email').value = '';
+        }
+      } catch (err) {
+        console.error('newsletter:', err);
+        msg.textContent = 'Erro ao cadastrar. Tente novamente.';
+        msg.className = 'newsletter-msg err';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    });
+  }
+
   // ---- Init ----
   async function init() {
     try {
+      initNewsletter();
       await Promise.all([loadSiteConfig(), loadMenu(), loadBanner()]);
 
       const slug = getPageParam('cat');

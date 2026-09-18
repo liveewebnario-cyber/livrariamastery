@@ -491,6 +491,12 @@
     <button class="nav-item" onclick="showPanel('categorias')">
       <span class="icon">🏷️</span> Categorias
     </button>
+    <button class="nav-item" onclick="showPanel('newsletters')">
+      <span class="icon">📧</span> Newsletter
+    </button>
+    <button class="nav-item" onclick="showPanel('pedidos')">
+      <span class="icon">🧾</span> Pedidos
+    </button>
     <button class="nav-item" onclick="showPanel('config')">
       <span class="icon">⚙️</span> Configurações
     </button>
@@ -592,6 +598,13 @@
           <label>Avaliação (estrelas 0 a 5)</label>
           <input type="number" id="eb-rating" placeholder="4.5" step="0.5" min="0" max="5" />
           <small style="color:var(--text-dim)">Deixe vazio ou 0 para não exibir estrelas no card.</small>
+        </div>
+
+        <!-- Número de avaliações -->
+        <div class="field">
+          <label>Nº de Avaliações</label>
+          <input type="number" id="eb-rating-count" placeholder="12" step="1" min="0" />
+          <small style="color:var(--text-dim)">Ex.: 12 → mostra "(12)" ao lado das estrelas.</small>
         </div>
 
         <!-- Destaque -->
@@ -808,6 +821,46 @@
     </div>
   </div>
 
+  <!-- PANEL: NEWSLETTER -->
+  <div class="panel" id="panel-newsletters">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">📧 Inscritos na Newsletter</div>
+          <div class="card-subtitle">E-mails captados pela faixa "Quero receber novidades" no site</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadNewsletters()">↻ Atualizar</button>
+        <button class="btn btn-primary btn-sm" onclick="exportNewslettersCsv()">⬇ Exportar CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>E-mail</th><th>Data de inscrição</th><th>Ações</th></tr></thead>
+          <tbody id="newsletters-tbody"><tr><td colspan="3"><div class="empty">⏳ Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL: PEDIDOS -->
+  <div class="panel" id="panel-pedidos">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">🧾 Pedidos e Eventos (Cakto)</div>
+          <div class="card-subtitle">Compras, reembolsos, chargebacks e carrinhos abandonados recebidos via webhook</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadOrders()">↻ Atualizar</button>
+        <button class="btn btn-primary btn-sm" onclick="exportOrdersCsv()">⬇ Exportar CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Evento</th><th>Cliente</th><th>Produto</th><th>Valor</th><th>E-mail</th></tr></thead>
+          <tbody id="orders-tbody"><tr><td colspan="6"><div class="empty">⏳ Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- PANEL: CONFIG -->
   <div class="panel" id="panel-config">
     <div class="card">
@@ -939,6 +992,10 @@
         <div class="field">
           <label>Avaliação (estrelas 0 a 5)</label>
           <input type="number" id="edit-rating" placeholder="4.5" step="0.5" min="0" max="5" />
+        </div>
+        <div class="field">
+          <label>Nº de Avaliações</label>
+          <input type="number" id="edit-rating-count" placeholder="12" step="1" min="0" />
         </div>
         <div class="field">
           <label>Destaque da Home</label>
@@ -1077,10 +1134,12 @@ function showPanel(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
   event.currentTarget.classList.add('active');
-  const titles = { ebooks:'Ebooks', banners:'Banners', categorias:'Categorias', config:'Configurações' };
-  const subs = { ebooks:'Adicione e gerencie seus ebooks', banners:'Gerencie o slider rotativo', categorias:'Gerencie as categorias do menu', config:'Configurações globais do site' };
+  const titles = { ebooks:'Ebooks', banners:'Banners', categorias:'Categorias', newsletters:'Newsletter', pedidos:'Pedidos', config:'Configurações' };
+  const subs = { ebooks:'Adicione e gerencie seus ebooks', banners:'Gerencie o slider rotativo', categorias:'Gerencie as categorias do menu', newsletters:'E-mails captados no site', pedidos:'Vendas e eventos recebidos da Cakto', config:'Configurações globais do site' };
   document.getElementById('panel-title').textContent = titles[name];
   document.getElementById('panel-sub').textContent = subs[name];
+  if (name === 'newsletters') loadNewsletters();
+  if (name === 'pedidos') loadOrders();
 }
 
 // ── TOAST ──
@@ -1123,6 +1182,87 @@ function setupPreview(inputId, previewId) {
     };
     reader.readAsDataURL(file);
   });
+}
+
+// ── NEWSLETTER ──
+let newsletterList = [];
+async function loadNewsletters() {
+  const { data, error } = await sb.from('newsletters').select('*').order('created_at', { ascending: false });
+  if(error) return toast('Erro ao carregar inscritos', 'error');
+  newsletterList = data || [];
+  const tbody = document.getElementById('newsletters-tbody');
+  if(!newsletterList.length) { tbody.innerHTML = '<tr><td colspan="3"><div class="empty">📭 Nenhum inscrito ainda</div></td></tr>'; return; }
+  tbody.innerHTML = newsletterList.map(n => `
+    <tr>
+      <td class="td-title">${n.email}</td>
+      <td style="color:var(--text-muted);font-size:0.82rem">${n.created_at ? new Date(n.created_at).toLocaleString('pt-BR') : '—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteNewsletter('${n.id}')">🗑</button></td>
+    </tr>
+  `).join('');
+}
+
+async function deleteNewsletter(id) {
+  if(!confirm('Remover este e-mail da lista?')) return;
+  const { error } = await sb.from('newsletters').delete().eq('id', id);
+  if(error) return toast('Erro: ' + error.message, 'error');
+  toast('E-mail removido');
+  loadNewsletters();
+}
+
+function exportNewslettersCsv() {
+  if(!newsletterList.length) return toast('Nenhum e-mail para exportar', 'error');
+  const header = 'email,data_inscricao';
+  const rows = newsletterList.map(n => `"${n.email}","${n.created_at || ''}"`).join('\n');
+  const blob = new Blob(['\ufeff' + header + '\n' + rows], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'newsletter-mastery.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('CSV exportado! ⬇');
+}
+
+// ── PEDIDOS (CAKTO) ──
+let ordersList = [];
+const ORDER_LABELS = {
+  purchase_approved: '✅ Compra aprovada',
+  purchase_refused: '❌ Compra recusada',
+  refund: '↩️ Reembolso',
+  chargeback: '⚠️ Chargeback',
+  checkout_abandonment: '🛒 Carrinho abandonado',
+  subscription_canceled: '🚫 Assinatura cancelada',
+};
+async function loadOrders() {
+  const { data, error } = await sb.from('cakto_orders').select('*').order('created_at', { ascending: false }).limit(500);
+  if(error) return toast('Erro ao carregar pedidos', 'error');
+  ordersList = data || [];
+  const tbody = document.getElementById('orders-tbody');
+  if(!ordersList.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty">📭 Nenhum pedido recebido ainda</div></td></tr>'; return; }
+  tbody.innerHTML = ordersList.map(o => {
+    const mail = o.email_sent ? '✅ enviado' : (o.email_error ? '—' : 'pendente');
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:0.82rem">${o.created_at ? new Date(o.created_at).toLocaleString('pt-BR') : '—'}</td>
+      <td>${ORDER_LABELS[o.event] || o.event}</td>
+      <td class="td-title">${o.customer_name || '—'}<br><small style="color:var(--text-muted)">${o.customer_email || ''}</small></td>
+      <td>${o.product_name || '—'}</td>
+      <td>${o.amount != null ? Number(o.amount).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '—'}</td>
+      <td style="font-size:0.8rem;color:var(--text-muted)">${mail}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportOrdersCsv() {
+  if(!ordersList.length) return toast('Nenhum pedido para exportar', 'error');
+  const header = 'data,evento,cliente,email,telefone,produto,valor,status_pagamento,metodo,email_enviado';
+  const rows = ordersList.map(o => [o.created_at,o.event,o.customer_name,o.customer_email,o.customer_phone,o.product_name,o.amount,o.status,o.payment_method,o.email_sent]
+    .map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff' + header + '\n' + rows], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pedidos-mastery.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('CSV exportado! ⬇');
 }
 
 // ── CATEGORIES ──
@@ -1212,6 +1352,7 @@ async function addEbook() {
   const video_url = document.getElementById('eb-video').value.trim();
   const audio_url = document.getElementById('eb-audio').value.trim();
   const rating = parseFloat(document.getElementById('eb-rating').value) || null;
+  const rating_count = parseInt(document.getElementById('eb-rating-count').value) || 0;
   const featured = document.getElementById('eb-featured').checked;
   const short_description = document.getElementById('eb-desc').value.trim();
   const full_description = document.getElementById('eb-full-desc').value.trim();
@@ -1255,7 +1396,7 @@ async function addEbook() {
     }
 
     const { error } = await sb.from('ebooks').insert({
-      title, category_id, old_price, new_price, checkout_url, download_url, rating,
+      title, category_id, old_price, new_price, checkout_url, download_url, rating, rating_count,
       short_description, full_description, cover_url, video_url, audio_url, featured, active: true, sort_order: 0
     });
 
@@ -1271,7 +1412,7 @@ async function addEbook() {
 }
 
 function clearEbookForm() {
-  ['eb-title','eb-author','eb-old-price','eb-new-price','eb-rating','eb-checkout','eb-download','eb-video','eb-audio','eb-desc','eb-full-desc','eb-cover-url'].forEach(id => {
+  ['eb-title','eb-author','eb-old-price','eb-new-price','eb-rating','eb-rating-count','eb-checkout','eb-download','eb-video','eb-audio','eb-desc','eb-full-desc','eb-cover-url'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('eb-category').selectedIndex = 0;
@@ -1528,6 +1669,7 @@ function openEditModal(e) {
   document.getElementById('edit-old-price').value   = e.old_price || '';
   document.getElementById('edit-new-price').value   = e.new_price || '';
   document.getElementById('edit-rating').value      = e.rating || '';
+  document.getElementById('edit-rating-count').value = e.rating_count || '';
   document.getElementById('edit-featured').checked  = !!e.featured;
   document.getElementById('edit-desc').value        = e.short_description || '';
   document.getElementById('edit-full-desc').value   = e.full_description || '';
@@ -1574,6 +1716,7 @@ async function saveEdit() {
   const old_price    = parseFloat(document.getElementById('edit-old-price').value) || null;
   const new_price    = parseFloat(document.getElementById('edit-new-price').value);
   const rating       = parseFloat(document.getElementById('edit-rating').value) || null;
+  const rating_count = parseInt(document.getElementById('edit-rating-count').value) || 0;
   const short_description = document.getElementById('edit-desc').value.trim();
   const full_description = document.getElementById('edit-full-desc').value.trim();
   const active       = document.getElementById('edit-active').value === 'true';
@@ -1604,7 +1747,7 @@ async function saveEdit() {
       }
     }
 
-    const updates = { title, category_id, checkout_url, download_url, old_price, new_price, rating, short_description, full_description, video_url, audio_url, active, featured };
+    const updates = { title, category_id, checkout_url, download_url, old_price, new_price, rating, rating_count, short_description, full_description, video_url, audio_url, active, featured };
     if(cover_url) updates.cover_url = cover_url;
 
     const { error } = await sb.from('ebooks').update(updates).eq('id', id);

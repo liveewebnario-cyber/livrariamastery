@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import Banner from './components/Banner';
 import Featured from './components/Featured';
 import ThemeShelves from './components/ThemeShelves';
+import Newsletter from './components/Newsletter';
 import EbookCard from './components/EbookCard';
 import Footer from './components/Footer';
 import { supabase } from './lib/supabase';
@@ -118,6 +119,7 @@ function App() {
             </>
           )}
         </div>
+      <Newsletter />
       </main>
 
       <Footer />

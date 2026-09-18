@@ -65,6 +65,9 @@ let mounted = true;
                                     className={i <= Math.round(rating) ? 'text-yellow-400' : 'text-slate-600'}
                                 />
                             ))}
+                            <span className="ml-1.5 text-sm font-semibold text-slate-300">
+                                {rating}{ebook.rating_count > 0 ? ` (${ebook.rating_count})` : ''}
+                            </span>
                         </div>
                     )}
 
