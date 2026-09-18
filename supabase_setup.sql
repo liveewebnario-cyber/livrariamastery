@@ -111,8 +111,59 @@ CREATE TABLE IF NOT EXISTS ebooks (
 CREATE TABLE IF NOT EXISTS newsletters (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT UNIQUE NOT NULL,
+  welcome_sent BOOLEAN DEFAULT FALSE,
+  welcome_sent_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- ============================================================
+-- TABELA: newsletter_emails (log de e-mails enviados a inscritos)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS newsletter_emails (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  newsletter_id UUID REFERENCES newsletters(id) ON DELETE SET NULL,
+  email TEXT NOT NULL,
+  email_type TEXT NOT NULL DEFAULT 'welcome',
+  subject TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  error TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS newsletter_emails_created_idx ON newsletter_emails (created_at DESC);
+CREATE INDEX IF NOT EXISTS newsletter_emails_email_idx ON newsletter_emails (email);
+
+-- ============================================================
+-- E-mail de boas-vindas automatico ao se inscrever na newsletter
+-- Dispara a Edge Function "newsletter-welcome" via pg_net
+-- ============================================================
+CREATE EXTENSION IF NOT EXISTS pg_net;
+
+CREATE OR REPLACE FUNCTION notify_newsletter_welcome()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, net
+AS $$
+BEGIN
+  PERFORM net.http_post(
+    url := 'https://cghrmeckjzjzgpgcgiot.supabase.co/functions/v1/newsletter-welcome',
+    headers := jsonb_build_object('Content-Type', 'application/json'),
+    body := jsonb_build_object(
+      'type', 'INSERT',
+      'table', 'newsletters',
+      'record', jsonb_build_object('id', NEW.id, 'email', NEW.email)
+    ),
+    timeout_milliseconds := 5000
+  );
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_newsletter_welcome ON newsletters;
+CREATE TRIGGER trg_newsletter_welcome
+AFTER INSERT ON newsletters
+FOR EACH ROW EXECUTE FUNCTION notify_newsletter_welcome();
 
 -- ============================================================
 -- TABELA: cakto_orders (eventos de webhook da Cakto)

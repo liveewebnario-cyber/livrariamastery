@@ -832,10 +832,24 @@
         <button class="btn btn-ghost btn-sm" onclick="loadNewsletters()">↻ Atualizar</button>
         <button class="btn btn-primary btn-sm" onclick="exportNewslettersCsv()">⬇ Exportar CSV</button>
       </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin:0 0 18px">
+        <div class="stat-card" style="--accent-color:#6c3483;flex:1;min-width:150px;padding:14px 16px">
+          <div class="stat-label">Inscritos</div>
+          <div class="stat-value" id="nl-total" style="font-size:1.6rem">—</div>
+        </div>
+        <div class="stat-card" style="--accent-color:#22d3a0;flex:1;min-width:150px;padding:14px 16px">
+          <div class="stat-label">Boas-vindas enviados</div>
+          <div class="stat-value" id="nl-welcome" style="font-size:1.6rem">—</div>
+        </div>
+        <div class="stat-card" style="--accent-color:#fc5c7d;flex:1;min-width:150px;padding:14px 16px">
+          <div class="stat-label">Falhas</div>
+          <div class="stat-value" id="nl-fail" style="font-size:1.6rem">—</div>
+        </div>
+      </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>E-mail</th><th>Data de inscrição</th><th>Ações</th></tr></thead>
-          <tbody id="newsletters-tbody"><tr><td colspan="3"><div class="empty">⏳ Carregando...</div></td></tr></tbody>
+          <thead><tr><th>E-mail</th><th>Data de inscrição</th><th>Boas-vindas</th><th>Ações</th></tr></thead>
+          <tbody id="newsletters-tbody"><tr><td colspan="4"><div class="empty">⏳ Carregando...</div></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1190,12 +1204,18 @@ async function loadNewsletters() {
   const { data, error } = await sb.from('newsletters').select('*').order('created_at', { ascending: false });
   if(error) return toast('Erro ao carregar inscritos', 'error');
   newsletterList = data || [];
+  const { count: failCount } = await sb.from('newsletter_emails').select('*', { count: 'exact', head: true }).eq('status', 'error');
+  const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setTxt('nl-total', newsletterList.length);
+  setTxt('nl-welcome', newsletterList.filter(n => n.welcome_sent).length);
+  setTxt('nl-fail', failCount ?? 0);
   const tbody = document.getElementById('newsletters-tbody');
-  if(!newsletterList.length) { tbody.innerHTML = '<tr><td colspan="3"><div class="empty">📭 Nenhum inscrito ainda</div></td></tr>'; return; }
+  if(!newsletterList.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty">📭 Nenhum inscrito ainda</div></td></tr>'; return; }
   tbody.innerHTML = newsletterList.map(n => `
     <tr>
       <td class="td-title">${n.email}</td>
       <td style="color:var(--text-muted);font-size:0.82rem">${n.created_at ? new Date(n.created_at).toLocaleString('pt-BR') : '—'}</td>
+      <td style="font-size:0.82rem">${n.welcome_sent ? '✅ enviado' : '⏳ pendente'}</td>
       <td><button class="btn btn-danger btn-sm" onclick="deleteNewsletter('${n.id}')">🗑</button></td>
     </tr>
   `).join('');
