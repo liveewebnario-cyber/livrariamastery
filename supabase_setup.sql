@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS ebooks (
 CREATE TABLE IF NOT EXISTS newsletters (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT UNIQUE NOT NULL,
+  name TEXT,
   welcome_sent BOOLEAN DEFAULT FALSE,
   welcome_sent_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -152,7 +153,7 @@ BEGIN
     body := jsonb_build_object(
       'type', 'INSERT',
       'table', 'newsletters',
-      'record', jsonb_build_object('id', NEW.id, 'email', NEW.email)
+      'record', jsonb_build_object('id', NEW.id, 'email', NEW.email, 'name', NEW.name)
     ),
     timeout_milliseconds := 5000
   );

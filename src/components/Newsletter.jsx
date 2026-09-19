@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 
 const Newsletter = () => {
     const [email, setEmail] = useState('');
+    const [name, setName] = useState('');
     const [busy, setBusy] = useState(false);
     const [msg, setMsg] = useState({ text: '', ok: true });
 
@@ -15,7 +16,7 @@ const Newsletter = () => {
         }
         setBusy(true);
         try {
-            const { error } = await supabase.from('newsletters').insert({ email: value });
+            const { error } = await supabase.from('newsletters').insert({ email: value, name: name.trim() || null });
             if (error) {
                 setMsg({
                     text: error.code === '23505' ? 'Este e-mail já está cadastrado. 😉' : 'Erro ao cadastrar. Tente novamente.',
@@ -24,6 +25,7 @@ const Newsletter = () => {
             } else {
                 setMsg({ text: '✅ E-mail cadastrado com sucesso!', ok: true });
                 setEmail('');
+                setName('');
             }
         } catch {
             setMsg({ text: 'Erro ao cadastrar. Tente novamente.', ok: false });
@@ -38,6 +40,13 @@ const Newsletter = () => {
                 <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-2">📬 Quer receber nossas novidades?</h2>
                 <p className="text-slate-400 mb-6">Lançamentos, ofertas e conteúdos exclusivos direto no seu e-mail. É gratuito!</p>
                 <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 max-w-md mx-auto">
+                    <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Seu nome (opcional)"
+                        className="flex-1 min-w-[180px] px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 outline-none focus:border-blue-500"
+                    />
                     <input
                         type="email"
                         value={email}

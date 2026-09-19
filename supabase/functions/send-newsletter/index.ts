@@ -51,8 +51,16 @@ function layout(title: string, body: string): string {
   </div></body></html>`;
 }
 
-function render(body: string, email: string): string {
-  return String(body ?? '').replace(/\{\{\s*email\s*\}\}/gi, esc(email));
+function pubName(name: unknown, email: string): string {
+  const n = String(name ?? '').trim();
+  const raw = n || String(email?.split('@')[0] ?? '').replace(/[._-]+/g, ' ').trim();
+  return raw.split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+function render(body: string, email: string, name?: string | null): string {
+  return String(body ?? '')
+    .replace(/\{\{\s*email\s*\}\}/gi, esc(email))
+    .replace(/\{\{\s*nome\s*\}\}/gi, esc(pubName(name, email)));
 }
 
 async function sendEmail(to: string, subject: string, html: string) {
@@ -143,7 +151,7 @@ async function processCampaign(campaign: any) {
 
   const { data: recips } = await supabase
     .from('newsletter_campaign_recipients')
-    .select('id,email')
+    .select('id,email,newsletters(name)')
     .eq('campaign_id', campaign.id)
     .eq('status', 'pending')
     .limit(Math.min(BATCH_SIZE, remainingToday));
@@ -175,7 +183,7 @@ async function processCampaign(campaign: any) {
         .eq('id', r.id);
       continue;
     }
-    const res = await sendEmail(r.email, subject, layout(subject, render(tpl.body, r.email)));
+    const res = await sendEmail(r.email, subject, layout(subject, render(tpl.body, r.email, (r as any).newsletters?.name)));
     await supabase
       .from('newsletter_campaign_recipients')
       .update({ status: res.ok ? 'sent' : 'failed', error: res.error, sent_at: new Date().toISOString() })

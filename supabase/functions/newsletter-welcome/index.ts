@@ -50,6 +50,12 @@ function button(label: string, url: string): string {
   return `<p style="text-align:center;margin:24px 0"><a href="${esc(url)}" style="background:${BRAND};color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;display:inline-block">${esc(label)}</a></p>`;
 }
 
+function pubName(name: unknown, email: string): string {
+  const n = String(name ?? '').trim();
+  const raw = n || String(email?.split('@')[0] ?? '').replace(/[._-]+/g, ' ').trim();
+  return raw.split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
 async function sendEmail(to: string, subject: string, html: string) {
   if (!RESEND_API_KEY) return { ok: false, error: 'RESEND_API_KEY ausente' };
   const r = await fetch('https://api.resend.com/emails', {
@@ -70,11 +76,12 @@ async function markWelcome(id: string) {
   await supabase.from('newsletters').update({ welcome_sent: true, welcome_sent_at: new Date().toISOString() }).eq('id', id);
 }
 
-async function welcomeFor(subscriber: { id: string; email: string }) {
+async function welcomeFor(subscriber: { id: string; email: string; name?: string | null }) {
   const to = subscriber.email;
+  const nome = esc(pubName(subscriber.name, to));
   const subject = `Bem-vindo(a) à ${SITE_NAME} 💜`;
   const body = `
-    <p>Olá!</p>
+    <p>Olá${nome ? ', <strong>' + nome + '</strong>' : ''}!</p>
     <p>Que bom ter você com a gente. Seu cadastro foi confirmado com sucesso. 🎉</p>
     <p>A partir de agora você vai receber em primeira mão:</p>
     <ul>
@@ -115,19 +122,19 @@ Deno.serve(async (req) => {
   const email: string | undefined = record.email;
 
   try {
-    let subscriber: { id: string; email: string; welcome_sent: boolean | null } | null = null;
+    let subscriber: { id: string; email: string; name?: string | null; welcome_sent: boolean | null } | null = null;
 
     if (id) {
       const { data } = await supabase
         .from('newsletters')
-        .select('id, email, welcome_sent')
+        .select('id, email, name, welcome_sent')
         .eq('id', id)
         .maybeSingle();
       subscriber = data ?? null;
     } else if (email) {
       const { data } = await supabase
         .from('newsletters')
-        .select('id, email, welcome_sent')
+        .select('id, email, name, welcome_sent')
         .eq('email', email)
         .maybeSingle();
       subscriber = data ?? null;

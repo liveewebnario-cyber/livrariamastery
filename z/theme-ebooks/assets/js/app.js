@@ -453,6 +453,7 @@ const App = (() => {
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const email = document.getElementById('newsletter-email').value.trim().toLowerCase();
+      const name = document.getElementById('newsletter-name').value.trim();
       const msg = document.getElementById('newsletter-msg');
       const btn = document.getElementById('newsletter-btn');
       if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
@@ -464,7 +465,7 @@ const App = (() => {
       const original = btn.textContent;
       btn.textContent = 'Cadastrando...';
       try {
-        const { error } = await sb.from('newsletters').insert({ email });
+        const { error } = await sb.from('newsletters').insert({ email, name: name || null });
         if (error) {
           if (error.code === '23505') { msg.textContent = 'Este e-mail já está cadastrado. 😉'; msg.className = 'newsletter-msg ok'; }
           else throw error;
@@ -472,6 +473,7 @@ const App = (() => {
           msg.textContent = '✅ E-mail cadastrado com sucesso!';
           msg.className = 'newsletter-msg ok';
           document.getElementById('newsletter-email').value = '';
+          document.getElementById('newsletter-name').value = '';
         }
       } catch (err) {
         console.error('newsletter:', err);

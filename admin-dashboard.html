@@ -855,8 +855,8 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>E-mail</th><th>Data de inscrição</th><th>Boas-vindas</th><th>Ações</th></tr></thead>
-          <tbody id="newsletters-tbody"><tr><td colspan="4"><div class="empty">⏳ Carregando...</div></td></tr></tbody>
+          <thead><tr><th>Nome</th><th>E-mail</th><th>Data de inscrição</th><th>Boas-vindas</th><th>Ações</th></tr></thead>
+          <tbody id="newsletters-tbody"><tr><td colspan="5"><div class="empty">⏳ Carregando...</div></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -888,7 +888,7 @@
       <div class="card-header">
         <div>
           <div class="card-title">📝 Templates de E-mail</div>
-          <div class="card-subtitle">Modelos usados nas campanhas. Use HTML simples; {{email}} é substituído pelo endereço do inscrito.</div>
+          <div class="card-subtitle">Modelos usados nas campanhas. Use HTML simples; {{email}} e {{nome}} são substituídos automaticamente pelo endereço e pelo nome do inscrito.</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="loadTemplates()">↻ Atualizar</button>
         <button class="btn btn-primary btn-sm" onclick="newTemplate()">＋ Novo template</button>
@@ -1323,10 +1323,11 @@ async function loadNewsletters() {
   setTxt('nl-welcome', newsletterList.filter(n => n.welcome_sent).length);
   setTxt('nl-fail', failCount ?? 0);
   const tbody = document.getElementById('newsletters-tbody');
-  if(!newsletterList.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty">📭 Nenhum inscrito ainda</div></td></tr>'; return; }
+  if(!newsletterList.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty">📭 Nenhum inscrito ainda</div></td></tr>'; return; }
   tbody.innerHTML = newsletterList.map(n => `
     <tr>
-      <td class="td-title">${n.email}</td>
+      <td class="td-title">${escHtml(n.name) || '—'}</td>
+      <td>${escHtml(n.email)}</td>
       <td style="color:var(--text-muted);font-size:0.82rem">${n.created_at ? new Date(n.created_at).toLocaleString('pt-BR') : '—'}</td>
       <td style="font-size:0.82rem">${n.welcome_sent ? '✅ enviado' : '⏳ pendente'}</td>
       <td style="white-space:nowrap">${n.welcome_sent ? '' : `<button class="btn btn-ghost btn-sm" onclick="resendWelcome('${n.id}', this)">✉ Reenviar</button> `}<button class="btn btn-danger btn-sm" onclick="deleteNewsletter('${n.id}')">🗑</button></td>
@@ -1344,8 +1345,8 @@ async function deleteNewsletter(id) {
 
 function exportNewslettersCsv() {
   if(!newsletterList.length) return toast('Nenhum e-mail para exportar', 'error');
-  const header = 'email,data_inscricao';
-  const rows = newsletterList.map(n => `"${n.email}","${n.created_at || ''}"`).join('\n');
+  const header = 'email,nome,data_inscricao';
+  const rows = newsletterList.map(n => `"${n.email}","${n.name || ''}","${n.created_at || ''}"`).join('\n');
   const blob = new Blob(['\ufeff' + header + '\n' + rows], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1513,7 +1514,7 @@ function loadCampTemplates() {
   if (cur) sel.value = cur;
 }
 async function loadCampRecipients() {
-  const { data } = await sb.from('newsletters').select('id,email').order('email');
+  const { data } = await sb.from('newsletters').select('id,email,name').order('email');
   campRecipients = data || [];
   renderCampRecipients();
 }
@@ -1530,7 +1531,7 @@ function renderCampRecipients() {
     list.innerHTML = filtered.map(r => `
       <label style="display:flex;align-items:center;gap:8px;padding:4px 6px;font-size:.85rem;cursor:pointer">
         <input type="checkbox" ${campSelected.has(r.id) ? 'checked' : ''} onchange="toggleCampRecipient('${r.id}', this.checked)" />
-        ${escHtml(r.email)}
+        <span><strong>${escHtml(r.name) || '—'}</strong> · ${escHtml(r.email)}</span>
       </label>`).join('');
   }
   const cnt = document.getElementById('camp-sel-count');
