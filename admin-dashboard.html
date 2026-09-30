@@ -470,9 +470,47 @@
   }
   .edit-cover-right { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 
+/* Portao de acesso */
+body.locked .sidebar, body.locked .main, body.locked .modal-overlay { display: none !important; }
+#login-screen {
+  position: fixed; inset: 0; z-index: 2000; display: flex;
+  align-items: center; justify-content: center; padding: 20px;
+  background: #0f0f16;
+}
+.login-box {
+  width: 100%; max-width: 380px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 16px; padding: 32px 28px;
+  text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,.5);
+}
+.login-box .lock-ico { font-size: 2.4rem; margin-bottom: 10px; }
+.login-box h1 { font-size: 1.15rem; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+.login-box p { font-size: .85rem; color: var(--text-muted); margin-bottom: 20px; }
+.login-box input {
+  width: 100%; padding: 13px 16px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--text); font-size: .95rem; margin-bottom: 12px;
+}
+.login-box input:focus { outline: none; border-color: #7c5cfc; }
+.login-box .btn { width: 100%; }
+.login-err { min-height: 1.1em; margin-top: 10px; font-size: .85rem; color: #fc5c7d; font-weight: 600; }
+.logout-btn { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); padding: 7px 12px; border-radius: 8px; font-size: .8rem; font-weight: 600; cursor: pointer; }
+.logout-btn:hover { color: var(--text); }
+
 </style>
 </head>
-<body>
+<body class="locked">
+
+<!-- PORTÃO DE ACESSO -->
+<div id="login-screen">
+  <form class="login-box" onsubmit="doLogin(event)">
+    <div class="lock-ico">🔒</div>
+    <h1>Mastery Ebooks</h1>
+    <p>Painel administrativo restrito. Digite a senha para continuar.</p>
+    <input type="password" id="login-pass" placeholder="Senha de acesso" autocomplete="current-password" autofocus />
+    <button class="btn btn-primary" type="submit">🔓 Entrar</button>
+    <div class="login-err" id="login-err"></div>
+  </form>
+</div>
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
@@ -524,6 +562,7 @@
       <h2 id="panel-title">Ebooks</h2>
       <p id="panel-sub">Adicione e gerencie seus ebooks</p>
     </div>
+    <button class="logout-btn" onclick="logout()">🚪 Sair</button>
   </div>
 
   <!-- STATS -->
@@ -2114,8 +2153,70 @@ async function saveEdit() {
   }
 }
 
+// ── PORTÃO DE ACESSO ──
+// A senha nao fica no arquivo: guardamos apenas o hash PBKDF2-SHA256.
+const ADMIN_SALT = '5bdb21d6e22061070f8131b2bfb29e83';
+const ADMIN_HASH = '5DM0EoIOfa2GKIhulbmZUPKoGeXRXx2eZ2xhAmXUBHo=';
+const SESSION_KEY = 'lm_admin_session';
+const SESSION_HOURS = 8;
+
+function toB64(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+}
+async function hashPassword(pw) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: enc.encode(ADMIN_SALT), iterations: 150000, hash: 'SHA-256' },
+    key, 256,
+  );
+  return toB64(bits);
+}
+function sessionValid() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    if (!s || !s.exp) return false;
+    if (Date.now() > s.exp) { localStorage.removeItem(SESSION_KEY); return false; }
+    return true;
+  } catch { return false; }
+}
+function unlock() {
+  document.body.classList.remove('locked');
+  const screen = document.getElementById('login-screen');
+  if (screen) screen.style.display = 'none';
+  init();
+}
+function lock() {
+  document.body.classList.add('locked');
+  const screen = document.getElementById('login-screen');
+  if (screen) screen.style.display = 'flex';
+  if (typeof closeEditModal === 'function') { try { closeEditModal(); } catch {} }
+  if (typeof closeBannerEditModal === 'function') { try { closeBannerEditModal(); } catch {} }
+}
+function logout() {
+  localStorage.removeItem(SESSION_KEY);
+  lock();
+}
+async function doLogin(ev) {
+  ev.preventDefault();
+  const input = document.getElementById('login-pass');
+  const err = document.getElementById('login-err');
+  const pw = input.value;
+  if (!pw) return;
+  err.textContent = '';
+  const hash = await hashPassword(pw);
+  if (hash === ADMIN_HASH) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ exp: Date.now() + SESSION_HOURS * 3600 * 1000 }));
+    input.value = '';
+    unlock();
+  } else {
+    err.textContent = 'Senha incorreta.';
+  }
+}
+
 // ── START ──
-init();
+if (sessionValid()) unlock();
+else lock();
 </script>
 </body>
 </html>
